@@ -10,7 +10,30 @@ services:
       RABBITMQ_DEFAULT_PASS: toor
     networks:
       - default
+    healthcheck:
+      test: ["CMD", "rabbitmqctl", "status"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+
+  service_template:
+    container_name: service_template
+    volumes:
+      - ./service_template:/app
+    build:
+      context: ./service_template
+    networks:
+      - default
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+    restart: always
+    ports:
+      - "8001:8001"
+
 
 networks:
   default:
     driver: bridge
+

@@ -17,4 +17,6 @@ RUN poetry config --no-cache virtualenvs.create false && poetry install --no-cac
 COPY . .
 RUN poetry install --no-cache --no-interaction --no-ansi --only main
 
-CMD ["poetry", "run", "faststream", "run", "app.serve:app"]
+# CMD ["poetry", "run", "faststream", "run", "app.main2:app"]
+CMD ["poetry", "run", "python", "app/main.py"]
+
