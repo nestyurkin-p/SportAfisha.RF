@@ -1,25 +1,76 @@
+:root {
+    --header-height: 50px;
+    --header-label-font-size: 15pt;
+}
+
 .header-content {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    width: 600px;
+    height: var(--header-height);
 }
 
 .navigation-controls {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    height: inherit;
 }
 
 .navigation-button {
-    width: 50px;
-    height: 50px;
+    width: var(--header-height);
+    height: var(--header-height);
 }
 
 .navigation-label {
     margin-left: 15px;
+    font-size: var(--header-label-font-size);
 }
 
 .office-filter {
-    height: 50px;
+    height: inherit;
+}
+
+.calendar-grid {
+    margin-top: 25px;
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 5px;
+}
+
+.day-header,
+.day-cell {
+    text-align: center;
+}
+
+.day-header {
+    color: #a3a3a3;
+    text-transform: uppercase;
+}
+
+.empty-cell {
+    border: none;
+}
+
+.day-cell {
+    padding: 10px;
+    min-height: 100px;
+    background-color: white;
+}
+
+.date {
+    font-size: 12pt;
+    color: black;
+}
+
+.events {
+    margin-top: 10px;
+}
+
+.event {
+    height: 10px;
+    background-color: #4561fd;
+    margin: 5px 0;
+    border-radius: 8px;
+    cursor: pointer;
 }
