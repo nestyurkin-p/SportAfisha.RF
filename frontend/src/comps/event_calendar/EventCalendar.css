@@ -1,0 +1,25 @@
+.header-content {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 600px;
+}
+
+.navigation-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navigation-button {
+    width: 50px;
+    height: 50px;
+}
+
+.navigation-label {
+    margin-left: 15px;
+}
+
+.office-filter {
+    height: 50px;
+}
