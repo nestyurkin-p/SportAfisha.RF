@@ -1,6 +1,6 @@
 import { Button, Input } from "@mui/joy";
 import "./Header.css";
-import FloatingLabelInput from "../floating_label_input/FloatingLabelInput";
+import FloatingLabelInput from "../controls/FloatingLabelInput";
 
 function AuthModal() {
   return (
