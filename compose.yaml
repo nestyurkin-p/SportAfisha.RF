@@ -1,37 +1,81 @@
 services:
-  rabbitmq:
-    image: rabbitmq:3-management
-    container_name: rabbitmq
-    ports:
-      - "5672:5672"
-      - "15672:15672"
-    environment:
-      RABBITMQ_DEFAULT_USER: root
-      RABBITMQ_DEFAULT_PASS: toor
-    networks:
-      - default
-    healthcheck:
-      test: ["CMD", "rabbitmqctl", "status"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+    athlete_db:
+      image: postgres:14
+      ports:
+        - "5432:5432"
+      environment:
+        POSTGRES_USER: "root"
+        POSTGRES_PASSWORD: "toor"
+        POSTGRES_DB: "athllete_db"
+      volumes:
+        - pgdata:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD", "pg_isready", "-h", "localhost", "-p", "5432"]
+        interval: 30s
+        timeout: 10s
 
+    application_db:
+      image: postgres:14
+      ports:
+        - "5433:5433"
+      environment:
+        POSTGRES_USER: "root"
+        POSTGRES_PASSWORD: "toor"
+        POSTGRES_DB: "application_db"
+      volumes:
+        - pgdata:/var/lib/postgresql/data
+      healthcheck:
+        test: ["CMD", "pg_isready", "-h", "localhost", "-p", "5433"]
+        interval: 30s
+        timeout: 10s
 
-  service_template:
-    container_name: service_template
-    volumes:
-      - ./service_template:/app
-    build:
-      context: ./service_template
-    networks:
-      - default
-    depends_on:
-      rabbitmq:
-        condition: service_healthy
-    restart: always
-    ports:
-      - "8001:8001"
+    rabbitmq:
+      image: rabbitmq:3-management
+      container_name: rabbitmq
+      ports:
+        - "5672:5672"
+        - "15672:15672"
+      environment:
+        RABBITMQ_DEFAULT_USER: "root"
+        RABBITMQ_DEFAULT_PASS: "toor"
+      networks:
+        - default
+      healthcheck:
+        test: ["CMD", "rabbitmqctl", "status"]
+        interval: 30s
+        timeout: 10s
+        retries: 3
 
+    application_handling:
+      container_name: application_handling
+      volumes:
+        - ./application_handling:/app
+      build:
+        context: ./application_handling
+      networks:
+        - default
+      depends_on:
+        rabbitmq:
+          condition: service_healthy
+      ports:
+        - "8002:8002"
+
+    athlete_handling:
+      container_name: athlete_handling
+      volumes:
+        - ./athlete_handling:/app
+      build:
+        context: ./athlete_handling
+      networks:
+        - default
+      depends_on:
+        rabbitmq:
+          condition: service_healthy
+      ports:
+        - "8003:8003"
+
+volumes:
+  pgdata:
 
 networks:
   default:
