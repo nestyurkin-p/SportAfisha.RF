@@ -59,8 +59,8 @@
 
 | Роль | Инструмент |
 |-------------|--------------|
-| Брокер сообщений | Kafka |
-| Взаимодействие с Kafka | [FastStream](https://faststream.airt.ai/latest/) |
+| Брокер сообщений | RabbitMQ |
+| Взаимодействие с RabbitMQ | [FastStream](https://faststream.airt.ai/latest/) |
 | Контейнеризация | Docker |
 | Веб-фреймворк | FastAPI |
 | База данных | PostgreSQL |
