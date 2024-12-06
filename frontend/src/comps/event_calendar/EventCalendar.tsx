@@ -56,13 +56,13 @@ function CalendarEventModal() {
       className="modal fade"
       id="calendarEventInfoModal"
       tabindex="-1"
-      aria-labelledby="exampleModalLabel"
+      aria-labelledby="calendarEventInfoModalLabel"
       aria-hidden="true"
     >
       <div className="modal-dialog">
         <div className="modal-content">
           <div className="modal-header">
-            <h1 className="modal-title fs-5" id="exampleModalLabel">
+            <h1 className="modal-title fs-5" id="calendarEventInfoModalLabel">
               {event}
             </h1>
             <button
