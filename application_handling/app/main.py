@@ -56,6 +56,9 @@ async def process_application(
         print('==============3')
         if request.approved:
             application.approved = True
+            db.add(application)
+            db.commit()
+            db.refresh(application)
             application_dict = application.to_dict()
             if application.application_type == "open":
                 print(application_dict)
