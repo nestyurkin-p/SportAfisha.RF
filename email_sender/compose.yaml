@@ -1,0 +1,16 @@
+services:
+  email:
+    container_name: email
+    stop_grace_period: 1s
+    restart: always
+    volumes:
+      - .:/app
+    build:
+      context: .
+    networks:
+      - sportportal_default
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true
