@@ -14,9 +14,10 @@ RUN pip install --no-cache-dir "poetry"
 COPY pyproject.toml poetry.lock .
 RUN poetry config --no-cache virtualenvs.create false && poetry install --no-cache --no-root --no-interaction --no-ansi --only main
 
-COPY . .
+ENV PYTHONPATH=/app
+
+COPY . /app/
 RUN poetry install --no-cache --no-interaction --no-ansi --only main
 
-# CMD ["poetry", "run", "faststream", "run", "app.main2:app"]
 CMD ["poetry", "run", "python", "app/main.py"]
 

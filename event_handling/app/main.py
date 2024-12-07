@@ -4,6 +4,7 @@ import uvicorn
 from fastapi import FastAPI
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker, RabbitQueue
+from app.data import db
 
 logging.basicConfig(level=logging.INFO)
 
@@ -11,10 +12,6 @@ api = FastAPI()
 broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
 
-
-@api.get("/")
-async def read_root():
-    return {"message": "Hello from FastAPI"}
 
 
 @app.after_startup
@@ -39,6 +36,8 @@ async def start_fastapi():
 
 
 async def main():
+    db.global_init()
+
     await asyncio.gather(
         start_fastapi(),
         start_faststream()
