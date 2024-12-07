@@ -20,7 +20,6 @@ from schemas import AthleteCreate, AthleteUpdate, AthleteInDB, StatusResponse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# Инициализация FastAPI
 api = FastAPI()
 
 # Получение URL для подключения к RabbitMQ из переменных окружения
