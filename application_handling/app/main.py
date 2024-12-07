@@ -1,9 +1,13 @@
 import asyncio
 import logging
 import uvicorn
-from fastapi import FastAPI
+from fastapi import FastAPI, Depends, HTTPException
+from sqlalchemy.orm import Session
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker, RabbitQueue
+from data.models import CreateApplicationRequest, ProcessApplicationRequest
+from data.database import get_db, create_applications_table
+from data.application import Application
 
 logging.basicConfig(level=logging.INFO)
 
@@ -12,20 +16,59 @@ broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
 
 
-@api.get("/")
-async def read_root():
-    return {"message": "Hello from FastAPI"}
+@api.post("/create_application")
+async def create_application(
+    request: CreateApplicationRequest, db: Session = Depends(get_db)
+):
+    new_application = Application(
+        event_id=request.event_id,
+        application_type=request.application_type,
+        approved=request.approved,
+        creator=request.creator_id,
+        result=request.result,
+    )
+    try:
+        db.add(new_application)
+        db.commit()
+        db.refresh(new_application)
+        data_to_return = {"status": "success", "application_id": new_application.id}
+        return data_to_return
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+
+
+@api.post("/process_application")
+async def process_application(
+    request: ProcessApplicationRequest, db: Session = Depends(get_db)
+):
+    try:
+        application = (
+            db.query(Application)
+            .filter(Application.id == request.application_id)
+            .first()
+        )
+
+        if not application:
+            raise HTTPException(status_code=404, detail="Application not found")
+        application_dict = application.to_dict()
+        if application.approved:
+            if application.application_type == "open":
+                await broker.publish(application_dict, queue="approved-events-queue")
+            elif application.application_type == "close":
+                await broker.publish(application_dict, queue="finished-events-queue")
+        return application_dict
+    except Exception as e:
+        db.rollback()
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 @app.after_startup
 async def startup():
-    await broker.declare_queue(RabbitQueue("test-queue"))
-    await broker.publish("Hello World!", queue="test-queue")
-
-
-@broker.subscriber("test-queue")
-async def base_handler(body):
-    logging.info(f"Got message: {body}")
+    await broker.declare_queue(RabbitQueue("approved-events-queue"))
+    await broker.publish("Hello World!", queue="approved-events-queue")
+    await broker.declare_queue(RabbitQueue("finished-events-queue"))
+    await broker.publish("Hello World!", queue="finished-events-queue")
 
 
 async def start_faststream():
@@ -39,13 +82,9 @@ async def start_fastapi():
 
 
 async def main():
-    await asyncio.gather(
-        start_fastapi(),
-        start_faststream()
-    )
+    await asyncio.gather(start_fastapi(), start_faststream())
 
 
 if __name__ == "__main__":
+    create_applications_table()
     asyncio.run(main())
-
-

@@ -15,7 +15,6 @@ fastapi_app = FastAPI()
 
 app = FastStream(broker)
 
-
 @app.after_startup
 async def startup():
     await broker.declare_queue(RabbitQueue("statistics-event-response-queue"))

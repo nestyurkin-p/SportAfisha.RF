@@ -26,6 +26,7 @@ POSTGRES_HOST = os.getenv("EVENT_DB_POSTGRES_HOST", POSTGRES_HOST_FALLBACK)
 POSTGRES_DATABASE = os.getenv("EVENT_DB_POSTGRES_DB", POSTGRES_DATABASE_FALLBACK)
 POSTGRES_PASSWORD_FILE = os.getenv("EVENT_DB_POSTGRES_PASSWORD_FILE")
 
+
 def get_db_url(i_am_alembic: bool = False):
     def get_postgres_password():
         if POSTGRES_PASSWORD_FILE:
@@ -86,11 +87,3 @@ class session(AbstractContextManager):
         if exc_type:
             self.session.rollback()
         self.session.close()
-
-
-def get_db():
-    db = session().__enter__()
-    try:
-        yield db
-    finally:
-        db.__exit__(None, None, None)

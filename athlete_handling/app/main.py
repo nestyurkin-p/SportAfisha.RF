@@ -39,13 +39,8 @@ async def start_fastapi():
 
 
 async def main():
-    await asyncio.gather(
-        start_fastapi(),
-        start_faststream()
-    )
+    await asyncio.gather(start_fastapi(), start_faststream())
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
