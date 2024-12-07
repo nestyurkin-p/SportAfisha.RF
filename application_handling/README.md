@@ -1,4 +1,4 @@
-# Описание очередей микросервиса application_handling
+# Описание микросервиса application_handling
 
 ## Эндпоинт `/create_application`
 ![image](https://github.com/user-attachments/assets/356ecabf-96bd-4f14-ad10-effc23e79e25)
