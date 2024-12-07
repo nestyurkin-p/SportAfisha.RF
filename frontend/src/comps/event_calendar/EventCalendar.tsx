@@ -88,14 +88,14 @@ function CalendarEventModal() {
   );
 }
 
-function CalendarGridCell({ day, idx }) {
+function CalendarGridCell({ day, idx }: { day: any; idx: number }) {
   const setEvent = useSetAtom(eventAtom);
   return (
     <div key={idx} className="day-cell">
       <span className="date">{day.date}</span>
       {day.events.length > 0 && (
         <div className="events">
-          {day.events.map((event, eventIdx) => (
+          {day.events.map((event: string, eventIdx: number) => (
             <div
               key={eventIdx}
               className="event"
@@ -111,9 +111,8 @@ function CalendarGridCell({ day, idx }) {
   );
 }
 
-function CalendarGrid({ events }) {
+function CalendarGrid({ events = [] }) {
   const daysInMonth = 31;
-  const month = "Декабрь 2024";
   const firstDay = 0; // Воскресенье (считается индексом первого дня)
 
   const generateDays = () => {
@@ -158,14 +157,12 @@ function CalendarGrid({ events }) {
   );
 }
 
-export default function EventCalendar({ events }) {
+export default function EventCalendar({ events = [] }) {
   return (
     <>
-      <div className="event-calendar">
-        <CalendarHeader />
-        <CalendarGrid events={events} />
-        <CalendarEventModal />
-      </div>
+      <CalendarHeader />
+      <CalendarGrid events={events} />
+      <CalendarEventModal />
     </>
   );
 }
