@@ -1,18 +1,11 @@
 import { CssVarsProvider, extendTheme } from "@mui/joy/styles";
 import Header from "./comps/header/Header";
-import EventCalendar from "./comps/event_calendar/EventCalendar";
+import EventCalendar from "./comps/calendar/EventCalendar";
 import ApplicationList from "./comps/application/ApplicationList";
 import ApplicationEdit from "./comps/application/ApplicationEdit";
 import RegionList from "./comps/region/RegionList";
 import UserEdit from "./comps/profile/UserEdit";
 import OfficeEdit from "./comps/profile/OfficeEdit";
-
-const calendarEvents = new Map([
-  ["03-12-2024", ["Событие 1", "Событие 2"]],
-  ["09-12-2024", ["Событие 3"]],
-  ["23-12-2024", ["Событие 4", "Событие 5"]],
-  ["25-12-2024", ["Чемпионат и Первенство России"]],
-]);
 
 const applications = [
   {
@@ -40,11 +33,11 @@ export default function App() {
             <Header />
           </div>
           <div className="row my-4 px-4">
-            {/* <EventCalendar events={calendarEvents} /> */}
+            <EventCalendar />
             {/* <ApplicationList applications={applications} /> */}
             {/* <RegionList /> */}
             {/* <UserEdit /> */}
-            <OfficeEdit />
+            {/* <OfficeEdit /> */}
           </div>
         </div>
       </CssVarsProvider>
