@@ -2,7 +2,6 @@ from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.dialects.postgresql import UUID
-import os
 
 DATABASE_URL = "postgresql://postgres:toor@application_db:5433/application_db"
 
