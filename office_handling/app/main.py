@@ -83,9 +83,6 @@ async def update_office(office: OfficeUpdate, db: Session = Depends(get_db)):
     # Возвращаем статус и id
     return {"status": "OK", "id": db_office.id}
 
-# Эндпоинт для получения всех offices с пагинацией
-
-
 # Эндпоинт для удаления спортсмена по ID
 @api.post("/delete_office", response_model=StatusResponse)
 async def delete_office(office: OfficeDelete, db: Session = Depends(get_db)):
@@ -113,6 +110,7 @@ async def delete_office(office: OfficeDelete, db: Session = Depends(get_db)):
     # Возвращаем статус и id
     return {"status": "OK", "id": office.id}
 
+# Эндпоинт для получения всех offices с пагинацией
 
 @api.get("/offices", response_model=List[OfficeInDB])
 async def get_offices(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):

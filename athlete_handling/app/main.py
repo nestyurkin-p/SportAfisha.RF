@@ -123,10 +123,6 @@ async def startup():
     # Отправка тестового сообщения
     await broker.publish("Hello World!", queue="test-queue")
 
-    # # Запуск тестовых операций только если RUN_TEST_OPERATIONS=true
-    # if os.getenv("RUN_TEST_OPERATIONS", "false").lower() == "true":
-    #     asyncio.create_task(perform_test_operations())
-
 # Подписчик на очередь test-queue
 @broker.subscriber("test-queue")
 async def base_handler(body):
@@ -161,8 +157,6 @@ async def create_athlete_request_handler(message: message):
         athlete_create = AthleteCreate(
             id=data["id"],  # Ожидаем, что id передан как UUID
             name=data["name"],
-            # last_name=data["last_name"],
-            # patronymic=data["patronymic"],
             location=data["location"],
             email=data["email"],
             UIN=data["UIN"],
@@ -235,8 +229,6 @@ async def update_athlete_request_handler(message: message):
         athlete_update = AthleteUpdate(
             id=athlete_uuid,
             name=data.get("name", ""),
-            # last_name=data.get("last_name", ""),
-            # patronymic=data.get("patronymic", ""),
             location=data.get("location", ""),
             email=data.get("email", ""),
             UIN=data.get("UIN", ""),

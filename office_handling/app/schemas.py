@@ -20,7 +20,7 @@ class OfficeUpdate(BaseModel):
 
 class OfficeInDB(OfficeBase):
     class Config:
-        from_attributes = True  # Заменено с orm_mode
+        from_attributes = True
 
 class StatusResponse(BaseModel):
     status: str = Field(..., example="OK", description="Статус выполнения операции")
