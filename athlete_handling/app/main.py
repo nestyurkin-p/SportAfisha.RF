@@ -160,7 +160,7 @@ async def create_athlete_request_handler(message: message):
         # Создание объекта AthleteCreate
         athlete_create = AthleteCreate(
             id=data["id"],  # Ожидаем, что id передан как UUID
-            first_name=data["first_name"],
+            name=data["name"],
             # last_name=data["last_name"],
             # patronymic=data["patronymic"],
             location=data["location"],
@@ -234,7 +234,7 @@ async def update_athlete_request_handler(message: message):
         # Создание объекта AthleteUpdate
         athlete_update = AthleteUpdate(
             id=athlete_uuid,
-            first_name=data.get("first_name", ""),
+            name=data.get("name", ""),
             # last_name=data.get("last_name", ""),
             # patronymic=data.get("patronymic", ""),
             location=data.get("location", ""),

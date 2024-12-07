@@ -4,7 +4,7 @@ from datetime import date
 
 class AthleteBase(BaseModel):
     id: UUID4 = Field(..., example="123e4567-e89b-42d3-a456-426614174000", description="UUID версии 4 для уникальной идентификации спортсмена")
-    first_name: str = Field(..., example="Иван Иванов Иванович")
+    name: str = Field(..., example="Иван Иванов Иванович")
     # last_name: str = Field(..., example="Иванов")
     # patronymic: str = Field(..., example="Иванович")
     location: str = Field(..., example="Москва")
@@ -18,7 +18,7 @@ class AthleteCreate(AthleteBase):
 
 class AthleteUpdate(BaseModel):
     id: UUID4 = Field(..., example="123e4567-e89b-42d3-a456-426614174000", description="UUID версии 4 для уникальной идентификации спортсмена")
-    first_name: str = Field(None, example="Иван Иванов Иванович")
+    name: str = Field(None, example="Иван Иванов Иванович")
     # last_name: str = Field(None, example="Иванов")
     # patronymic: str = Field(None, example="Иванович")
     location: str = Field(None, example="Москва")
