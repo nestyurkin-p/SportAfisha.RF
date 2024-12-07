@@ -3,6 +3,5 @@ __pycache__
 .vscode
 venv
 env
-.env
 .secrets
-
+.*_pgdata
