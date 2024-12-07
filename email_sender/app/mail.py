@@ -1,10 +1,7 @@
 import os
 import boto3
 
-from email.mime.text import MIMEText
 from botocore.exceptions import ClientError
-from email.mime.multipart import MIMEMultipart
-
 
 client = boto3.client(
     service_name="sesv2",
@@ -14,29 +11,28 @@ client = boto3.client(
 
 
 def postbox_send(target_email, subject, message):
-    SENDER = os.getenv("SENDER")
-    CHARSET = "utf-8"
-
-    msg = MIMEMultipart("mixed")
-    msg["Subject"] = subject
-    msg_body = MIMEMultipart("alternative")
-    textpart = MIMEText(message.encode(CHARSET), "plain", CHARSET)
-    msg_body.attach(textpart)
-    msg.attach(msg_body)
-
+    charset = "UTF-8"
+    sender = os.getenv("SENDER")
     try:
         print("Sending response")
         response = client.send_email(
-            FromEmailAddress=SENDER,
-            Destination={"ToAddresses": [target_email]},
+            FromEmailAddress=sender,
+            Destination={
+                "ToAddresses": [
+                    target_email,
+                ],
+            },
             Content={
-                "Raw": {
-                    "Data": msg.as_string(),
-                },
+                "Simple": {
+                    "Subject": {"Data": subject, "Charset": charset},
+                    "Body": {
+                        "Text": {"Data": message, "Charset": charset},
+                    },
+                }
             },
         )
         print(response)
     except ClientError as e:
         print(e.response["Error"]["Message"])
     else:
-        print("Email sent! Message ID: " + response["MessageId"]),
+        print("Email sent! Message ID: " + response["MessageId"])

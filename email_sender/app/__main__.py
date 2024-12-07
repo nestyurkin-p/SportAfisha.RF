@@ -17,5 +17,5 @@ async def main():
 
 
 if __name__ == "__main__":
-    postbox_send("markmelix@gmail.com", "test_topic", "test_message")
+    postbox_send("markoni.work@yandex.ru", "test_topic", "test_message")
     # asyncio.run(main())
