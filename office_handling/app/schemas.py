@@ -25,3 +25,10 @@ class OfficeInDB(OfficeBase):
 class StatusResponse(BaseModel):
     status: str = Field(..., example="OK", description="Статус выполнения операции")
     id: UUID4 = Field(..., example="123e4567-e89b-42d3-a456-426614174000", description="UUID созданного спортсмена")
+
+class OfficeDelete(BaseModel):
+    id: UUID4 = Field(
+        ...,
+        example="123e4567-e89b-42d3-a456-426614174000",
+        description="UUID атлета для удаления"
+    )

@@ -14,7 +14,7 @@ from uuid import UUID
 
 from database import Base, engine, SessionLocal, get_db
 from models import Office
-from schemas import OfficeCreate, OfficeUpdate, OfficeInDB, StatusResponse
+from schemas import OfficeCreate, OfficeUpdate, OfficeInDB, StatusResponse, OfficeDelete
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -84,6 +84,36 @@ async def update_office(office: OfficeUpdate, db: Session = Depends(get_db)):
     return {"status": "OK", "id": db_office.id}
 
 # Эндпоинт для получения всех offices с пагинацией
+
+
+# Эндпоинт для удаления спортсмена по ID
+@api.post("/delete_office", response_model=StatusResponse)
+async def delete_office(office: OfficeDelete, db: Session = Depends(get_db)):
+    logger.info(f"[DELETE] Attempting to delete office with ID: {office.id}")
+
+    # Поиск office по ID
+    db_office = db.query(Office).filter(Office.id == office.id).first()
+
+    if not db_office:
+        logger.warning(f"[DELETE] Office with ID {office.id} not found.")
+        raise HTTPException(status_code=404, detail="Office not found")
+
+    # Удаление office
+    db.delete(db_office)
+    db.commit()
+
+    logger.info(f"[DELETE] Office with ID: {office.id} has been deleted.")
+
+    # Отправка сообщения в очередь RabbitMQ
+    await broker.publish(
+        {"action": "deleted", "office_id": str(office.id)},
+        queue="office_events"
+    )
+
+    # Возвращаем статус и id
+    return {"status": "OK", "id": office.id}
+
+
 @api.get("/offices", response_model=List[OfficeInDB])
 async def get_offices(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
@@ -114,6 +144,7 @@ async def startup():
     await broker.declare_queue(RabbitQueue("office_events"))
     await broker.declare_queue(RabbitQueue("create_office"))
     await broker.declare_queue(RabbitQueue("update_office"))
+    await broker.declare_queue(RabbitQueue("delete_office"))
     await broker.declare_queue(RabbitQueue("responses"))
 
     # Отправка тестового сообщения
@@ -259,6 +290,83 @@ async def update_office_request_handler(message: message):
         logger.error("[MQ UPDATE] Failed to decode JSON from message body.")
     except KeyError as e:
         logger.error(f"[MQ UPDATE] Missing key in message data: {e}")
+
+
+@broker.subscriber("delete_office")
+async def delete_office_request_handler(message: message):
+    """
+    Обработчик сообщений из очереди delete_office.
+    Ожидает сообщение с UUID для удаления office.
+    Отправляет ответ 'OK' обратно в reply_to очередь.
+    """
+    try:
+        data = json.loads(message.body)
+        logger.info(f"[MQ DELETE] Received message: {data}")
+
+        # Извлечение reply_to и correlation_id
+        reply_to = message.properties.reply_to
+        correlation_id = message.properties.correlation_id
+
+        if not reply_to or not correlation_id:
+            logger.error("[MQ DELETE] Missing reply_to or correlation_id in message properties.")
+            return
+
+        # Проверка наличия ID
+        office_id = data.get("id")
+        if not office_id:
+            logger.error("[MQ DELETE] Missing 'id' in message data.")
+            response = {"status": "error", "message": "Missing 'id' in message data"}
+            await broker.publish(
+                json.dumps(response),
+                queue=reply_to,
+                correlation_id=correlation_id
+            )
+            return
+
+        # Проверка валидности UUID
+        try:
+            office_uuid = UUID(str(office_id))
+        except ValueError:
+            logger.error("[MQ DELETE] Invalid UUID format for id.")
+            response = {"status": "error", "message": "Invalid UUID format for id"}
+            await broker.publish(
+                json.dumps(response),
+                queue=reply_to,
+                correlation_id=correlation_id
+            )
+            return
+
+        # Поиск и удаление office
+        db = SessionLocal()
+        try:
+            db_office = db.query(Office).filter(Office.id == office_uuid).first()
+            if not db_office:
+                logger.warning(f"[MQ DELETE] Office with ID {office_uuid} not found.")
+                response = {"status": "error", "message": "Office not found"}
+            else:
+                db.delete(db_office)
+                db.commit()
+                logger.info(f"[MQ DELETE] Office with ID: {db_office.id} has been deleted.")
+                response = {"status": "OK", "id": str(db_office.id)}
+        except Exception as e:
+            logger.error(f"[MQ DELETE] Error deleting office: {e}")
+            response = {"status": "error", "message": "Internal server error"}
+        finally:
+            db.close()
+
+        # Отправка ответа
+        await broker.publish(
+            json.dumps(response),
+            queue=reply_to,
+            correlation_id=correlation_id
+        )
+        logger.info(f"[MQ DELETE] Sent response to {reply_to} with correlation_id {correlation_id}")
+
+    except json.JSONDecodeError:
+        logger.error("[MQ DELETE] Failed to decode JSON from message body.")
+    except KeyError as e:
+        logger.error(f"[MQ DELETE] Missing key in message data: {e}")
+
 
 # Подписчик на очередь responses
 @broker.subscriber("responses")
