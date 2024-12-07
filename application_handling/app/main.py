@@ -18,19 +18,21 @@ app = FastStream(broker)
 
 @api.post("/create_application")
 async def create_application(
-    request: CreateApplicationRequest, db: Session = Depends(get_db)
+        request: CreateApplicationRequest, db: Session = Depends(get_db)
 ):
     new_application = Application(
         event_id=request.event_id,
-        application_type=request.application_type,
-        creator=request.creator_id,
+        application_purpose=request.application_purpose,  # open / close
+        creator_id=request.creator_id,
         results=request.results,
     )
     try:
         db.add(new_application)
         db.commit()
         db.refresh(new_application)
-        data_to_return = {"status": "success", "application_id": new_application.id}
+        application_dict = new_application.to_dict()
+        await broker.publish(application_dict, queue="pending-events-queue")
+        data_to_return = {"status": "success", "application_id": new_application.application_id}
         return data_to_return
     except Exception as e:
         db.rollback()
@@ -39,32 +41,33 @@ async def create_application(
 
 @api.post("/process_application")
 async def process_application(
-    request: ProcessApplicationRequest, db: Session = Depends(get_db)
+        request: ProcessApplicationRequest, db: Session = Depends(get_db)
 ):
-    print('==============')
     try:
-        print('==============1')
         application = (
             db.query(Application)
-            .filter(Application.id == request.application_id)
+            .filter(Application.application_id == request.application_id)
             .first()
         )
-        print('==============2')
 
         if not application:
             raise HTTPException(status_code=404, detail="Application not found")
-        print('==============3')
-        if request.approved:
-            application.approved = True
-            db.add(application)
-            db.commit()
-            db.refresh(application)
-            application_dict = application.to_dict()
-            if application.application_type == "open":
-                print(application_dict)
-                await broker.publish(application_dict, queue="approved-events-queue")
-            elif application.application_type == "close":
-                await broker.publish(application_dict, queue="finished-events-queue")
+
+        application.pending = request.pending
+        application.confirmed = request.confirmed
+        application.rejected = request.rejected
+
+        db.add(application)
+        db.commit()
+        db.refresh(application)
+        application_dict = application.to_dict()
+
+        # условия разделения на открытие и закрытие заявки в другом микросервисе
+        # тк глобально их логика совпадает до отправки, отличаются только application.purpose
+        if application.rejected:  # Шаг 3: заявка отклонена
+            await broker.publish(application_dict, queue="rejected-events-queue")
+        elif application.confirmed:  # Шаг 3: заявка подтверждена
+            await broker.publish(application_dict, queue="confirmed-events-queue")
         return application_dict
     except Exception as e:
         db.rollback()
@@ -73,10 +76,9 @@ async def process_application(
 
 @app.after_startup
 async def startup():
-    await broker.declare_queue(RabbitQueue("approved-events-queue"))
-    # await broker.publish("Hello World!", queue="approved-events-queue")
-    await broker.declare_queue(RabbitQueue("finished-events-queue"))
-    # await broker.publish("Hello World!", queue="finished-events-queue")
+    await broker.declare_queue(RabbitQueue("pending-events-queue"))
+    await broker.declare_queue(RabbitQueue("rejected-events-queue"))
+    await broker.declare_queue(RabbitQueue("confirmed-events-queue"))
 
 
 async def start_faststream():

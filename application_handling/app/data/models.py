@@ -7,11 +7,13 @@ class CreateApplicationRequest(BaseModel):
     token: str
     event_id: UUID
     creator_id: UUID
-    application_type: str
+    application_purpose: str
     results: Optional[Dict] = None
 
 
 class ProcessApplicationRequest(BaseModel):
     token: str
     application_id: UUID
-    approved: bool
+    pending: bool
+    confirmed: bool
+    rejected: bool
