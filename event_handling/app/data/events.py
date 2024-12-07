@@ -16,4 +16,3 @@ class Event(SqlAlchemyBase):
     date_finished = sa.Column(sa.Date)
     location = sa.Column(sa.String)
     description = sa.Column(sa.String)
-

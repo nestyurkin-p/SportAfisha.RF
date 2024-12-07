@@ -13,7 +13,6 @@ broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
 
 
-
 @app.after_startup
 async def startup():
     await broker.declare_queue(RabbitQueue("test-queue"))
@@ -38,13 +37,8 @@ async def start_fastapi():
 async def main():
     db.global_init()
 
-    await asyncio.gather(
-        start_fastapi(),
-        start_faststream()
-    )
+    await asyncio.gather(start_fastapi(), start_faststream())
 
 
 if __name__ == "__main__":
     asyncio.run(main())
-
-
