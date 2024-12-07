@@ -13,8 +13,8 @@ from sqlalchemy.orm import Session
 from uuid import UUID
 
 from database import Base, engine, SessionLocal, get_db
-from models import Athlete
-from schemas import AthleteCreate, AthleteUpdate, AthleteInDB, StatusResponse
+from models import Office
+from schemas import OfficeCreate, OfficeUpdate, OfficeInDB, StatusResponse
 
 # Настройка логирования
 logging.basicConfig(level=logging.INFO)
@@ -37,112 +37,104 @@ Base.metadata.create_all(bind=engine)
 async def read_root():
     return {"message": "Hello from FastAPI"}
 
-# Эндпоинт для создания спортсмена
-@api.post("/create_athlete", response_model=StatusResponse)
-async def create_athlete(athlete: AthleteCreate, db: Session = Depends(get_db)):
-    logger.info(f"[CREATE] Attempting to create athlete with UIN: {athlete.UIN}")
-
-    # Создание нового спортсмена
-    new_athlete = Athlete(**athlete.model_dump())
-    db.add(new_athlete)
+# Эндпоинт для создания региона
+@api.post("/create_office", response_model=StatusResponse)
+async def create_office(office: OfficeCreate, db: Session = Depends(get_db)):
+    # Создание нового office
+    new_office = Office(**office.model_dump())
+    db.add(new_office)
     db.commit()
-    db.refresh(new_athlete)
-
-    logger.info(f"[CREATE] Athlete created with ID: {new_athlete.id}, UIN: {new_athlete.UIN}")
+    db.refresh(new_office)
 
     # Отправка сообщения в очередь RabbitMQ
-    await broker.publish({"action": "created", "athlete_id": str(new_athlete.id)}, queue="athlete_events")
+    await broker.publish({"action": "created", "office_id": str(new_office.id)}, queue="office_events")
 
     # Возвращаем статус и id
-    return {"status": "OK", "id": new_athlete.id}
+    return {"status": "OK", "id": office.id}
 
-# Эндпоинт для обновления спортсмена по ID
-@api.post("/update_athlete", response_model=StatusResponse)
-async def update_athlete(athlete: AthleteUpdate, db: Session = Depends(get_db)):
-    logger.info(f"[UPDATE] Attempting to update athlete with ID: {athlete.id}")
+# Эндпоинт для обновления office по ID
+@api.post("/update_office", response_model=StatusResponse)
+async def update_office(office: OfficeUpdate, db: Session = Depends(get_db)):
+    logger.info(f"[UPDATE] Attempting to update office with ID: {office.id}")
 
-    # Поиск спортсмена по ID
-    db_athlete = db.query(Athlete).filter(Athlete.id == athlete.id).first()
+    # Поиск office по ID
+    db_office = db.query(Office).filter(Office.id == office.id).first()
 
-    if not db_athlete:
-        logger.warning(f"[UPDATE] Athlete with ID {athlete.id} not found.")
-        raise HTTPException(status_code=404, detail="Athlete not found")
+    if not db_office:
+        logger.warning(f"[UPDATE] Office with ID {office.id} not found.")
+        raise HTTPException(status_code=404, detail="Office not found")
 
-    # Обновление полей спортсмена, исключая ID
-    update_data = athlete.model_dump()
+    # Обновление полей office, исключая ID
+    update_data = office.model_dump()
     update_data.pop("id", None)
 
     for field, value in update_data.items():
         if value:  # Обновляем только непустые поля
-            setattr(db_athlete, field, value)
+            setattr(db_office, field, value)
 
     db.commit()
-    db.refresh(db_athlete)
+    db.refresh(db_office)
 
-    logger.info(f"[UPDATE] Athlete with ID: {db_athlete.id} (UIN: {db_athlete.UIN}) has been updated.")
+    logger.info(f"[UPDATE] Office with ID: {db_office.id} has been updated.")
 
     # Отправка сообщения в очередь RabbitMQ
-    await broker.publish({"action": "updated", "athlete_id": str(db_athlete.id)}, queue="athlete_events")
+    await broker.publish({"action": "updated", "office_id": str(db_office.id)}, queue="office_events")
 
     # Возвращаем статус и id
-    return {"status": "OK", "id": db_athlete.id}
+    return {"status": "OK", "id": db_office.id}
 
-# Эндпоинт для получения всех спортсменов с пагинацией
-@api.get("/athletes", response_model=List[AthleteInDB])
-async def get_athletes(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
+# Эндпоинт для получения всех offices с пагинацией
+@api.get("/offices", response_model=List[OfficeInDB])
+async def get_offices(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
     """
-    Возвращает список спортсменов с возможностью пагинации.
+    Возвращает список offices с возможностью пагинации.
     """
-    athletes = db.query(Athlete).offset(skip).limit(limit).all()
-    logger.info(f"[GET] Retrieved {len(athletes)} athletes from the database.")
-    return athletes
+    offices = db.query(Office).offset(skip).limit(limit).all()
+    logger.info(f"[GET] Retrieved {len(offices)} offices from the database.")
+    return offices
 
-# Эндпоинт для получения конкретного спортсмена по ID
-@api.get("/athletes/{athlete_id}", response_model=AthleteInDB)
-async def get_athlete(athlete_id: UUID, db: Session = Depends(get_db)):
+# Эндпоинт для получения конкретного office по ID
+@api.get("/offices/{office_id}", response_model=OfficeInDB)
+async def get_office(office_id: UUID, db: Session = Depends(get_db)):
     """
-    Возвращает информацию о конкретном спортсмене по его ID.
+    Возвращает информацию о конкретном office по его ID.
     """
-    athlete = db.query(Athlete).filter(Athlete.id == athlete_id).first()
-    if not athlete:
-        logger.warning(f"[GET] Athlete with ID {athlete_id} not found.")
-        raise HTTPException(status_code=404, detail="Athlete not found")
-    logger.info(f"[GET] Retrieved athlete with ID {athlete_id}.")
-    return athlete
+    office = db.query(Office).filter(Office.id == office_id).first()
+    if not office:
+        logger.warning(f"[GET] Office with ID {office_id} not found.")
+        raise HTTPException(status_code=404, detail="Office not found")
+    logger.info(f"[GET] Retrieved athlete with ID {office_id}.")
+    return office
 
 # Настройка FastStream для работы с RabbitMQ
 @app.after_startup
 async def startup():
     # Объявление очередей
     await broker.declare_queue(RabbitQueue("test-queue"))
-    await broker.declare_queue(RabbitQueue("athlete_events"))
-    await broker.declare_queue(RabbitQueue("create_athlete"))
-    await broker.declare_queue(RabbitQueue("update_athlete"))
+    await broker.declare_queue(RabbitQueue("office_events"))
+    await broker.declare_queue(RabbitQueue("create_office"))
+    await broker.declare_queue(RabbitQueue("update_office"))
     await broker.declare_queue(RabbitQueue("responses"))
 
     # Отправка тестового сообщения
     await broker.publish("Hello World!", queue="test-queue")
-
-    # # Запуск тестовых операций только если RUN_TEST_OPERATIONS=true
-    # if os.getenv("RUN_TEST_OPERATIONS", "false").lower() == "true":
-    #     asyncio.create_task(perform_test_operations())
 
 # Подписчик на очередь test-queue
 @broker.subscriber("test-queue")
 async def base_handler(body):
     logger.info(f"Got message from test-queue: {body}")
 
-# Подписчик на очередь athlete_events
-@broker.subscriber("athlete_events")
-async def athlete_event_handler(body):
-    logger.info(f"Got athlete event: {body}")
+# Подписчик на очередь office_events
+@broker.subscriber("office_events")
+async def office_event_handler(body):
+    logger.info(f"Got office event: {body}")
 
-# Подписчик на очередь create_athlete
-@broker.subscriber("create_athlete")
-async def create_athlete_request_handler(message: message):
+# Подписчик на очередь create_office
+@broker.subscriber("create_office")
+async def create_office_request_handler(message: message):
     """
-    Обработчик сообщений из очереди create_athlete.
-    Ожидает сообщение с параметрами для создания спортсмена.
+    Обработчик сообщений из очереди create_office.
+    Ожидает сообщение с параметрами для создания office.
     Отправляет ответ 'OK' и 'id' обратно в reply_to очередь.
     """
     try:
@@ -157,30 +149,26 @@ async def create_athlete_request_handler(message: message):
             logger.error("[MQ CREATE] Missing reply_to or correlation_id in message properties.")
             return
 
-        # Создание объекта AthleteCreate
-        athlete_create = AthleteCreate(
+        # Создание объекта OfficeCreate
+        office_create = OfficeCreate(
             id=data["id"],  # Ожидаем, что id передан как UUID
-            first_name=data["first_name"],
-            # last_name=data["last_name"],
-            # patronymic=data["patronymic"],
-            location=data["location"],
+            federal_district=data["federal_district"],
+            region=data["region"],
             email=data["email"],
-            UIN=data["UIN"],
-            birth_date=date.fromisoformat(data["birth_date"]),
-            phone_number=data["phone_number"]
+            director_name=data["director_name"],
         )
 
-        # Создание спортсмена
+        # Создание office
         db = SessionLocal()
         try:
-            new_athlete = Athlete(**athlete_create.model_dump())
-            db.add(new_athlete)
+            new_office = Office(**office_create.model_dump())
+            db.add(new_office)
             db.commit()
-            db.refresh(new_athlete)
-            logger.info(f"[MQ CREATE] Athlete created with ID: {new_athlete.id}, UIN: {new_athlete.UIN}")
-            response = {"status": "OK", "id": str(new_athlete.id)}
+            db.refresh(new_office)
+            logger.info(f"[MQ CREATE] Office created with ID: {new_office.id}")
+            response = {"status": "OK", "id": str(new_office.id)}
         except Exception as e:
-            logger.error(f"[MQ CREATE] Error creating athlete: {e}")
+            logger.error(f"[MQ CREATE] Error creating office: {e}")
             response = {"status": "error", "message": "Internal server error"}
         finally:
             db.close()
@@ -194,12 +182,12 @@ async def create_athlete_request_handler(message: message):
     except KeyError as e:
         logger.error(f"[MQ CREATE] Missing key in message data: {e}")
 
-# Подписчик на очередь update_athlete
-@broker.subscriber("update_athlete")
-async def update_athlete_request_handler(message: message):
+# Подписчик на очередь update_office
+@broker.subscriber("update_office")
+async def update_office_request_handler(message: message):
     """
-    Обработчик сообщений из очереди update_athlete.
-    Ожидает сообщение с параметрами для обновления спортсмена по ID.
+    Обработчик сообщений из очереди update_office.
+    Ожидает сообщение с параметрами для обновления office по ID.
     Отправляет ответ 'OK' обратно в reply_to очередь.
     """
     try:
@@ -215,8 +203,8 @@ async def update_athlete_request_handler(message: message):
             return
 
         # Проверка наличия ID
-        athlete_id = data.get("id")
-        if not athlete_id:
+        office_id = data.get("id")
+        if not office_id:
             logger.error("[MQ UPDATE] Missing 'id' in message data.")
             response = {"status": "error", "message": "Missing 'id' in message data"}
             await broker.publish(json.dumps(response), queue=reply_to, correlation_id=correlation_id)
@@ -224,45 +212,41 @@ async def update_athlete_request_handler(message: message):
 
         # Проверка валидности UUID
         try:
-            athlete_uuid = UUID(str(athlete_id))
+            office_uuid = UUID(str(office_id))
         except ValueError:
             logger.error("[MQ UPDATE] Invalid UUID format for id.")
             response = {"status": "error", "message": "Invalid UUID format for id"}
             await broker.publish(json.dumps(response), queue=reply_to, correlation_id=correlation_id)
             return
 
-        # Создание объекта AthleteUpdate
-        athlete_update = AthleteUpdate(
-            id=athlete_uuid,
-            first_name=data.get("first_name", ""),
-            # last_name=data.get("last_name", ""),
-            # patronymic=data.get("patronymic", ""),
-            location=data.get("location", ""),
+        # Создание объекта OfficeUpdate
+        office_update = OfficeUpdate(
+            id=office_uuid,
+            federal_district=data.get("federal_district", ""),
+            region=data.get("region", ""),
             email=data.get("email", ""),
-            UIN=data.get("UIN", ""),
-            birth_date=date.fromisoformat(data["birth_date"]) if data.get("birth_date") else date.today(),
-            phone_number=data.get("phone_number", "")
+            director_name=data.get("director_name", ""),
         )
 
-        # Обновление спортсмена
+        # Обновление office
         db = SessionLocal()
         try:
-            db_athlete = db.query(Athlete).filter(Athlete.id == athlete_update.id).first()
-            if not db_athlete:
-                logger.warning(f"[MQ UPDATE] Athlete with ID {athlete_update.id} not found.")
-                response = {"status": "error", "message": "Athlete not found"}
+            db_office = db.query(Office).filter(Office.id == office_update.id).first()
+            if not db_office:
+                logger.warning(f"[MQ UPDATE] Office with ID {office_update.id} not found.")
+                response = {"status": "error", "message": "Office not found"}
             else:
-                update_data = athlete_update.model_dump()
+                update_data = office_update.model_dump()
                 update_data.pop("id", None)  # Удаляем id из обновляемых данных
                 for field, value in update_data.items():
                     if value:  # Обновляем только непустые поля
-                        setattr(db_athlete, field, value)
+                        setattr(db_office, field, value)
                 db.commit()
-                db.refresh(db_athlete)
-                logger.info(f"[MQ UPDATE] Athlete with ID: {db_athlete.id} (UIN: {db_athlete.UIN}) has been updated.")
-                response = {"status": "OK", "id": str(db_athlete.id)}
+                db.refresh(db_office)
+                logger.info(f"[MQ UPDATE] Office with ID: {db_office.id} has been updated.")
+                response = {"status": "OK", "id": str(db_office.id)}
         except Exception as e:
-            logger.error(f"[MQ UPDATE] Error updating athlete: {e}")
+            logger.error(f"[MQ UPDATE] Error updating office: {e}")
             response = {"status": "error", "message": "Internal server error"}
         finally:
             db.close()

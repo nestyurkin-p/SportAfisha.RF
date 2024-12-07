@@ -6,11 +6,7 @@ class Office(Base):
     __tablename__ = 'offices'
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
-    first_name = Column(String, index=True)
-    # last_name = Column(String, index=True)
-    # patronymic = Column(String, index=True)
-    location = Column(String)
+    federal_district = Column(String)
+    region = Column(String)
     email = Column(String, index=True)
-    UIN = Column(String, index=True)
-    birth_date = Column(Date)
-    phone_number = Column(String)
+    director_name = Column(String, index=True)
