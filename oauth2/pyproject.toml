@@ -10,6 +10,12 @@ python = "^3.12"
 faststream = {extras = ["cli", "fastapi", "rabbit"], version = "^0.5.33"}
 fastapi = {extras = ["standard"], version = "^0.115.6"}
 uvicorn = "^0.32.1"
+python-dotenv = "^1.0.1"
+pyjwt = {extras = ["crypto"], version = "^2.10.1"}
+passlib = {extras = ["passlib"], version = "^1.7.4"}
+redis = {extras = ["hiredis"], version = "^5.2.1"}
+sqlalchemy = "^2.0.36"
+psycopg2 = "^2.9.10"
 
 
 [build-system]
