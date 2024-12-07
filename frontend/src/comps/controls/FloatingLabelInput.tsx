@@ -74,6 +74,7 @@ export default function FloatingLabelInput({
   minHeight = "56px",
   radius = "6px",
   className = "",
+  endDecorator = null,
 }: {
   label: string;
   props: object;
@@ -81,9 +82,11 @@ export default function FloatingLabelInput({
   radius: string;
   compProps: object;
   className: string;
+  endDecorator: any;
 }) {
   return (
     <Input
+      endDecorator={endDecorator}
       slots={{ input: InnerInput }}
       slotProps={{ input: { label: label, props: props } }}
       sx={{ "--Input-minHeight": minHeight, "--Input-radius": radius }}
