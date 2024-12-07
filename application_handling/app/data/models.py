@@ -7,9 +7,8 @@ class CreateApplicationRequest(BaseModel):
     token: str
     event_id: UUID
     creator_id: UUID
-    approved: bool
     application_type: str
-    result: Optional[Dict] = None
+    results: Optional[Dict] = None
 
 
 class ProcessApplicationRequest(BaseModel):

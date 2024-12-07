@@ -11,7 +11,7 @@
     "event_id": "b2d6b4a5-dc28-4a7d-902d-3f67b84c123c",
     "creator_id": "b8b8774b-0b3c-4b5a-bbc6-130586c5e5ee",
     "application_type": "open",
-    "result": {"score": 100}
+    "results": {"score": 100}
   }
   
   ```

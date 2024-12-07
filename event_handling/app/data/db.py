@@ -87,3 +87,10 @@ class session(AbstractContextManager):
         if exc_type:
             self.session.rollback()
         self.session.close()
+
+def get_db():
+    db = session().__enter__()
+    try:
+        yield db
+    finally:
+        db.__exit__(None, None, None)

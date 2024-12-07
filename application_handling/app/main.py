@@ -23,9 +23,8 @@ async def create_application(
     new_application = Application(
         event_id=request.event_id,
         application_type=request.application_type,
-        approved=request.approved,
         creator=request.creator_id,
-        result=request.result,
+        results=request.results,
     )
     try:
         db.add(new_application)
@@ -42,18 +41,24 @@ async def create_application(
 async def process_application(
     request: ProcessApplicationRequest, db: Session = Depends(get_db)
 ):
+    print('==============')
     try:
+        print('==============1')
         application = (
             db.query(Application)
             .filter(Application.id == request.application_id)
             .first()
         )
+        print('==============2')
 
         if not application:
             raise HTTPException(status_code=404, detail="Application not found")
-        application_dict = application.to_dict()
-        if application.approved:
+        print('==============3')
+        if request.approved:
+            application.approved = True
+            application_dict = application.to_dict()
             if application.application_type == "open":
+                print(application_dict)
                 await broker.publish(application_dict, queue="approved-events-queue")
             elif application.application_type == "close":
                 await broker.publish(application_dict, queue="finished-events-queue")
@@ -66,9 +71,9 @@ async def process_application(
 @app.after_startup
 async def startup():
     await broker.declare_queue(RabbitQueue("approved-events-queue"))
-    await broker.publish("Hello World!", queue="approved-events-queue")
+    # await broker.publish("Hello World!", queue="approved-events-queue")
     await broker.declare_queue(RabbitQueue("finished-events-queue"))
-    await broker.publish("Hello World!", queue="finished-events-queue")
+    # await broker.publish("Hello World!", queue="finished-events-queue")
 
 
 async def start_faststream():

@@ -2,6 +2,7 @@ import json
 from datetime import date, datetime
 import logging
 from pydantic import UUID4, BaseModel, Json
+from typing import Optional
 from app.api.get_events import EventResponse
 from app.data.events import Event
 from app.data import db
@@ -11,12 +12,12 @@ broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 
 
 class EventApprovedMsg(BaseModel):
-    event_id: str # uuid
-    creator_id: str # uuid
-    application_id: str # uuid
-    applictaion_type: str 
-    approved_status: bool
-    results: dict
+    event_id: str
+    creator_id: str
+    application_id: str
+    application_type: str 
+    approved: bool
+    results: dict | None
 
 
 @broker.subscriber("finished-events-queue")
@@ -31,7 +32,6 @@ async def aprove_event(msg: EventApprovedMsg):
     #     "approved_status": bool,
     #     "results": json | none
     # }
-    # msg = EventApprovedMsg(**json.loads(body.decode("utf-8")))
     with db.session() as db_sess:
         event = db_sess.query(Event).filter(Event.id == msg.event_id).first()
         print(msg)
@@ -43,7 +43,7 @@ async def aprove_event(msg: EventApprovedMsg):
             logging.error("This event dosen't need approve")
             raise Exception
 
-        event.is_approved = msg.approved_status
+        event.is_approved = msg.approved
         db_sess.commit()
 
 

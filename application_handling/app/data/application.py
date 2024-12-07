@@ -10,9 +10,9 @@ class Application(Base):
             "application_id": str(self.id),
             "event_id": str(self.event_id),
             "application_type": self.application_type,
-            "approved_status": self.approved,
+            "approved": self.approved,
             "creator_id": str(self.creator),
-            "result": self.result,
+            "results": self.results,
         }
 
     __tablename__ = "applications"
@@ -20,6 +20,6 @@ class Application(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True)
     event_id = Column(UUID(as_uuid=True), nullable=False)
     application_type = Column(String, nullable=False)
-    approved = Column(Boolean, nullable=False)
+    approved = Column(Boolean, nullable=True, default=None)
     creator = Column(UUID(as_uuid=True), nullable=False)
-    result = Column(JSON, nullable=True)
+    results = Column(JSON, nullable=True)
