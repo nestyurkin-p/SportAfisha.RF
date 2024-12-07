@@ -1,0 +1,15 @@
+services:
+  service:
+    container_name: service
+    stop_grace_period: 1s
+    volumes:
+      - .:/app
+    build:
+      context: .
+    networks:
+      - sportportal_default
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true

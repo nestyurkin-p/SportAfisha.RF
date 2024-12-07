@@ -1,0 +1,41 @@
+services:
+  office_db:
+    image: postgres:latest
+    container_name: office_db
+    environment:
+      PGPORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: toor
+      POSTGRES_DB: office_db
+    ports:
+      - "5499:5432"
+    volumes:
+      - office_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "office_db", "-h", "localhost", "-p", "5432"]
+      interval: 5s
+      timeout: 50s
+    networks:
+        - sportportal_default
+
+  office_handling:
+    container_name: office_handling
+    volumes:
+      - .:/app
+    build:
+      context: .
+    networks:
+      - sportportal_default
+    depends_on:
+      office_db:
+        condition: service_healthy
+    ports:
+      - "8007:8003"
+
+volumes: 
+  office_pgdata:
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true
