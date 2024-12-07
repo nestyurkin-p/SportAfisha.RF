@@ -4,48 +4,19 @@ import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
 from faststream import FastStream
-from faststream.rabbit import RabbitBroker, RabbitQueue
-from data.models import CreateApplicationRequest, ProcessApplicationRequest
+from faststream.rabbit import RabbitQueue
+from data.models import ProcessApplicationRequest
 from data.database import get_db, create_applications_table
 from data.application import Application
+from routers.create_application import create_application_router
+
 
 logging.basicConfig(level=logging.INFO)
 
 api = FastAPI()
-broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
 
-
-@api.get("/")
-async def read_root():
-    return {"message": "Hello from FastAPI"}
-
-
-@api.post("/create_application")
-async def create_application(
-    request: CreateApplicationRequest, db: Session = Depends(get_db)
-):
-    new_application = Application(
-        event_id=request.event_id,
-        application_type=request.application_type,
-        approved=False,
-        creator=request.creator_id,
-        result=request.result,
-    )
-    try:
-        db.add(new_application)
-        db.commit()
-        db.refresh(new_application)
-        data_to_return = {"status": "success", "application_id": new_application.id}
-        await broker.publish(data_to_return, queue="application-handling-queue")
-        return data_to_return
-    except Exception as e:
-        db.rollback()
-        await broker.publish(
-            f"Database error: {str(e)}", queue="application-handling-queue"
-        )
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
-
+api.include_router(create_application_router)
 
 @api.post("/process_application")
 async def process_application(
