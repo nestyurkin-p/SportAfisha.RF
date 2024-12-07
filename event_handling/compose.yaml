@@ -1,0 +1,41 @@
+services:
+  event_handling:
+    container_name: event_handling
+    volumes:
+      - .:/app
+    build:
+      context: .
+    networks:
+      - sportportal_default
+    depends_on:
+      event_db:
+        condition: service_healthy
+    ports:
+      - "8004:8004"
+
+  event_db:
+    image: postgres:latest
+    container_name: event_db
+    environment:
+      PGPORT: 5434
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: toor
+      POSTGRES_DB: event_db
+    ports:
+      - "5434:5434"
+    volumes:
+      - event_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "event_db", "-h", "localhost", "-p", "5434"] 
+      interval: 5s
+      timeout: 50s
+    networks:
+        - sportportal_default
+
+volumes:
+  event_pgdata:
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true

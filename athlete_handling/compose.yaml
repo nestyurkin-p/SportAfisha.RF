@@ -1,0 +1,41 @@
+services:
+  athlete_db:
+    image: postgres:latest
+    container_name: athlete_db
+    environment:
+      PGPORT: 5432
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: toor
+      POSTGRES_DB: athlete_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - athlete_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "athlete_db", "-h", "localhost", "-p", "5432"]
+      interval: 5s
+      timeout: 50s
+    networks:
+        - sportportal_default
+
+  athlete_handling:
+    container_name: athlete_handling
+    volumes:
+      - .:/app
+    build:
+      context: .
+    networks:
+      - sportportal_default
+    depends_on:
+      athlete_db:
+        condition: service_healthy
+    ports:
+      - "8003:8003"
+
+volumes: 
+  athlete_pgdata:
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true
