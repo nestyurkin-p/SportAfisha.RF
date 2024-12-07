@@ -7,8 +7,8 @@ class Athlete(Base):
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True, nullable=False)
     first_name = Column(String, index=True)
-    last_name = Column(String, index=True)
-    patronymic = Column(String, index=True)
+    # last_name = Column(String, index=True)
+    # patronymic = Column(String, index=True)
     location = Column(String)
     email = Column(String, index=True)
     UIN = Column(String, index=True)
