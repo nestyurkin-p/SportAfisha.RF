@@ -34,7 +34,7 @@ def login_for_access_token(
             detail="Incorrect username or password",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    token = create_user_access_token(user.id, ACCESS_TOKEN_EXPIRES)
+    token = create_user_access_token(str(user.id), user.role, ACCESS_TOKEN_EXPIRES)
     background_tasks.add_task(create_session, token.access_token)
     return token
 

@@ -32,7 +32,8 @@ class Token(BaseModel):
 
 
 class TokenData(BaseModel):
-    user_id: int
+    user_id: str
+    user_role: models.Role
 
 
 def get_user_password_hash(password):
@@ -52,11 +53,14 @@ def authenticate_user(db: Session, username: str, password: str):
     return user
 
 
-def create_user_access_token(user_id: int, expires_delta: timedelta) -> Token:
+def create_user_access_token(
+    user_id: str, user_role: models.Role, expires_delta: timedelta
+) -> Token:
     expire = datetime.now(timezone.utc) + expires_delta
     data = {
-        "sub": f"user_id:{user_id}",
+        "sub": user_id,
         "exp": expire,
+        "roles": [user_role],
     }
     encoded_jwt = jwt.encode(data, SECRET_KEY, algorithm=JWT_ALGORITHM)
     return Token(access_token=encoded_jwt, token_type="bearer")
@@ -65,17 +69,13 @@ def create_user_access_token(user_id: int, expires_delta: timedelta) -> Token:
 def get_token_data(token: str) -> TokenData:
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[JWT_ALGORITHM])
-        subject = payload.get("sub")
+        user_id = payload.get("sub")
+        roles = payload.get("roles")
 
-        if subject is None:
+        if user_id is None or roles is None or len(roles) == 0:
             raise CredentialsValidationError
 
-        try:
-            user_id = int(subject.split(":")[1])
-        except (IndexError, ValueError):
-            raise CredentialsValidationError
-
-        return TokenData(user_id=user_id)
+        return TokenData(user_id=user_id, user_role=roles[0])
 
     # Signature expiration error gets handled either
     except jwt.InvalidTokenError:

@@ -5,10 +5,10 @@ from sqlalchemy import UUID, Column, String, Enum
 from .database import SqlAlchemyBase
 
 
-class Role(enum.StrEnum):
-    SUPERUSER = "superuser"
-    OFFICE = "office"
-    ATHLETE = "athlete"
+class Role(str, enum.Enum):
+    superuser = "superuser"
+    office = "office"
+    athlete = "athlete"
 
 
 class User(SqlAlchemyBase):

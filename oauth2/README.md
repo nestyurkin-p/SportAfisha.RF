@@ -28,53 +28,56 @@ docker compose up --build
 
 ## Коммуникация между микросервисами
 
-Происходит посредством очередй сообщений `RabbitMQ`. Всё взаимодействие с сервисом происходит через `oauth-queue`.
-
 ### Валидация учетных данных
 
-Принимает сообщения из очереди на проверку аутентификационных данных в следующем формате:
+Принимает сообщения из очереди `oauth-validate-request-queue` на проверку аутентификационных данных в следующем формате:
 
 ``` json
 {
-    "sender": "<sender service name>",
-    "type": "validate",
     "token": "<bearer token>"
 }
 ```
 
-И пушит следующее следом:
+И пушит в `oauth-validate-response-queue` следующее:
 
 ``` json
 {
-    "sender": "oauth2",
-    "type": "validate",
     "token": "<bearer token>",
-    "role": "<one of: athlete | office | superuser>"
-    "validated": true | false
+    "validated": true | false,
+    < "role": "<one of: athlete | office | superuser>" >
 }
 ```
 
+`"role"` включено в ответ при условии, что `"validated" == true`.
+
 ### Регистрация
 
-Запрос на регистрацию сущности:
+Принимает сообщения из очереди `oauth-register-request-queue` на регистрацию сущности в следующем формате:
 
 ``` json
 {
-    "sender": "<sender service name>",
-    "type": "register",
     "email": "<email>",
     "require_email_verification": true | false,
     "password": "<password>",
 }
 ```
 
-Ответ:
+И пушит в `oauth-register-response-queue` следующее следом:
 
 ``` json
 {
-    "sender": "oauth2",
-    "type": "register",
     "email": "<email>",
     "email_status": "<one of: pending_verification | verified>"
 }
+```
+
+Если `"require_email_verification" == true`, то `"email_status" = "pending_verification"`, при этом OAuth2 отправляет следующее сообщение в `email-request-queue`:
+
+``` json
+{
+    "address": "<email address>",
+    "topic": "ФСП Портал - Подтвердите ваш адрес электронной почты",
+    "content": "Ссылка для подтверждения: http://oauth2/verify?token=<verification token>"
+}
+
 ```

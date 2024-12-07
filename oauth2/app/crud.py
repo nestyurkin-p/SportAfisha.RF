@@ -29,7 +29,7 @@ async def create_superuser():
             raise SuperuserUnspecifiedCredentialsError(
                 "please, provide initial superuser credentials in the .env file"
             )
-        create_user(email, password, Role.SUPERUSER, owner_id=None, db=next(get_db()))
+        create_user(email, password, Role.superuser, owner_id=None, db=next(get_db()))
         logging.info("Superuser was created successfully")
     except UserExistsError:
         logging.info("Superuser exists already - skipping creation")
