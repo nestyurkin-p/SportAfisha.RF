@@ -3,6 +3,9 @@ import Header from "./comps/header/Header";
 import EventCalendar from "./comps/event_calendar/EventCalendar";
 import ApplicationList from "./comps/application/ApplicationList";
 import ApplicationEdit from "./comps/application/ApplicationEdit";
+import RegionList from "./comps/region/RegionList";
+import UserEdit from "./comps/profile/UserEdit";
+import OfficeEdit from "./comps/profile/OfficeEdit";
 
 const calendarEvents = new Map([
   ["03-12-2024", ["Событие 1", "Событие 2"]],
@@ -39,7 +42,9 @@ export default function App() {
           <div className="row my-4 px-4">
             {/* <EventCalendar events={calendarEvents} /> */}
             {/* <ApplicationList applications={applications} /> */}
-            <ApplicationEdit application={applications[0]} />
+            {/* <RegionList /> */}
+            {/* <UserEdit /> */}
+            <OfficeEdit />
           </div>
         </div>
       </CssVarsProvider>
