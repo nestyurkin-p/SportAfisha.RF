@@ -9,7 +9,6 @@ logging.basicConfig(level=logging.INFO)
 
 
 from .stream import faststream_runner
-from .mail import postbox_send
 
 
 async def main():
@@ -17,5 +16,4 @@ async def main():
 
 
 if __name__ == "__main__":
-    postbox_send("markoni.work@yandex.ru", "test_topic", "test_message")
-    # asyncio.run(main())
+    asyncio.run(main())

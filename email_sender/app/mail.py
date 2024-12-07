@@ -1,38 +1,11 @@
-import os
-import boto3
+import smtplib
 
-from botocore.exceptions import ClientError
-
-client = boto3.client(
-    service_name="sesv2",
-    endpoint_url="https://postbox.cloud.yandex.net",
-    region_name="ru-central1",
-)
+port = 8025
+smtp_server = "smtpd"
+sender_email = "test@mail.com"
+password = "toor"
 
 
-def postbox_send(target_email, subject, message):
-    charset = "UTF-8"
-    sender = os.getenv("SENDER")
-    try:
-        print("Sending response")
-        response = client.send_email(
-            FromEmailAddress=sender,
-            Destination={
-                "ToAddresses": [
-                    target_email,
-                ],
-            },
-            Content={
-                "Simple": {
-                    "Subject": {"Data": subject, "Charset": charset},
-                    "Body": {
-                        "Text": {"Data": message, "Charset": charset},
-                    },
-                }
-            },
-        )
-        print(response)
-    except ClientError as e:
-        print(e.response["Error"]["Message"])
-    else:
-        print("Email sent! Message ID: " + response["MessageId"])
+def send(receiver_email, message):
+    with smtplib.SMTP(smtp_server, port) as server:
+        server.sendmail(sender_email, receiver_email, message)

@@ -1,10 +1,9 @@
 import logging
 
+from . import mail
 from pydantic import BaseModel
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker, RabbitQueue
-
-from .mail import postbox_send
 
 broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
@@ -17,7 +16,6 @@ QUEUES = [REQQ, RESPQ]
 
 class Request(BaseModel):
     address: str
-    topic: str
     content: str
 
 
@@ -29,15 +27,12 @@ class Response(Request):
 async def startup():
     for queue in QUEUES:
         await broker.declare_queue(RabbitQueue(queue))
-    print("Made brokers")
-    postbox_send("markmelix@gmail.com", "test mail topic", "test mail content")
-    print("sent message")
 
 
 @broker.subscriber(REQQ)
 @broker.publisher(RESPQ)
 async def request_handler(message: Request):
-    pass
+    mail.send(receiver_email=message.address, message=message.content)
 
 
 async def faststream_runner():
