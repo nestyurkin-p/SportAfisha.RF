@@ -5,6 +5,16 @@ import uuid
 
 
 class Application(Base):
+    def to_dict(self):
+        return {
+            "application_id": str(self.id),
+            "event_id": str(self.event_id),
+            "application_type": self.application_type,
+            "approved_status": self.approved,
+            "creator_id": str(self.creator),
+            "result": self.result,
+        }
+
     __tablename__ = "applications"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4, unique=True)

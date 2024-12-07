@@ -23,7 +23,7 @@ async def create_application(
     new_application = Application(
         event_id=request.event_id,
         application_type=request.application_type,
-        approved=False,
+        approved=request.approved,
         creator=request.creator_id,
         result=request.result,
     )
@@ -32,7 +32,6 @@ async def create_application(
         db.commit()
         db.refresh(new_application)
         data_to_return = {"status": "success", "application_id": new_application.id}
-        await broker.publish(data_to_return, queue="approved-events-queue")
         return data_to_return
     except Exception as e:
         db.rollback()
@@ -52,28 +51,24 @@ async def process_application(
 
         if not application:
             raise HTTPException(status_code=404, detail="Application not found")
-
-        application.approved = request.approved
-        db.commit()
-        db.refresh(application)
-        data_to_return = {
-            "status": "success",
-            "application_id": application.id,
-            "approved": application.approved,
-        }
-        await broker.publish(data_to_return, queue="finished-events-queue")
-        return data_to_return
+        application_dict = application.to_dict()
+        if application.approved:
+            if application.application_type == "open":
+                await broker.publish(application_dict, queue="approved-events-queue")
+            elif application.application_type == "close":
+                await broker.publish(application_dict, queue="finished-events-queue")
+        return application_dict
     except Exception as e:
         db.rollback()
-        raise HTTPException(status_code=500, detail=f"Database error: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error: {str(e)}")
 
 
 @app.after_startup
 async def startup():
     await broker.declare_queue(RabbitQueue("approved-events-queue"))
-    await broker.publish("Hello approved World!", queue="approved-events-queue")
+    await broker.publish("Hello World!", queue="approved-events-queue")
     await broker.declare_queue(RabbitQueue("finished-events-queue"))
-    await broker.publish("Hello finished World!", queue="finished-events-queue")
+    await broker.publish("Hello World!", queue="finished-events-queue")
 
 
 async def start_faststream():
