@@ -1,0 +1,14 @@
+services:
+  mok:
+    container_name: mok
+    volumes:
+      - .:/app
+    build:
+      context: .
+    networks:
+      - sportportal_default
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true

@@ -1,0 +1,62 @@
+services:
+  credentials_db:
+    container_name: credentials_db
+    image: postgres:17.2-bookworm
+    restart: always
+    env_file: .env
+    volumes:
+      - .pgdata:${PGDATA}
+    ports:
+      - 5442:5432
+    secrets:
+      - source: postgres_root_password
+    networks:
+      - default
+      - sportportal_default
+    command: postgres -c listen_addresses='*'
+    healthcheck:
+      test: ["CMD", "pg_isready"]
+      interval: 3s
+
+  credentials_redis:
+    container_name: credentials_redis
+    restart: always
+    image: redis:7.4.1-bookworm
+    command: redis-server --requirepass ${REDIS_PASSWORD} --save 60 1
+    volumes:
+      - .redis:/data
+    networks:
+      - default
+      - sportportal_default
+    ports:
+      - 6379:6379
+
+  oauth2:
+    container_name: oauth2
+    stop_grace_period: 1s
+    restart: always
+    ports:
+      - 8010:80
+    volumes:
+      - .:/app
+    build:
+      context: .
+    secrets:
+      - source: postgres_root_password
+      - source: jwt_secret_key
+    depends_on:
+      credentials_db:
+        condition: service_healthy
+    networks:
+      - sportportal_default
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true
+
+secrets:
+  postgres_root_password:
+    file: .secrets/postgres_root_password
+  jwt_secret_key:
+    file: .secrets/jwt_secret_key
