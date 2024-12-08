@@ -2,7 +2,7 @@ from pydantic import BaseModel, EmailStr, UUID4, Field
 from datetime import date
 
 class AthleteBase(BaseModel):
-    id: UUID4 = Field(..., example="123e4567-e89b-42d3-a456-426614174000", description="UUID версии 4 для уникальной идентификации спортсмена")
+    # id: UUID4 = Field(..., example="123e4567-e89b-42d3-a456-426614174000", description="UUID версии 4 для уникальной идентификации спортсмена")
     name: str = Field(..., example="Иван Иванов Иванович")
     location: str = Field(..., example="Москва")
     email: EmailStr = Field(..., example="ivan.ivanov@example.com")

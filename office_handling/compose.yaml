@@ -3,16 +3,16 @@ services:
     image: postgres:latest
     container_name: office_db
     environment:
-      PGPORT: 5432
+      PGPORT: 5431
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: toor
       POSTGRES_DB: office_db
     ports:
-      - "5499:5432"
+      - "5431:5431"
     volumes:
       - office_pgdata:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "office_db", "-h", "localhost", "-p", "5432"]
+      test: ["CMD", "pg_isready", "-U", "postgres", "-d", "office_db", "-h", "localhost", "-p", "5431"]
       interval: 5s
       timeout: 50s
     networks:

@@ -44,11 +44,7 @@ async def create_office(office: OfficeCreate, db: Session = Depends(get_db)):
     db.commit()
     db.refresh(new_office)
 
-    await broker.publish(
-        {"action": "created", "office_id": str(new_office.id)}, queue="office_events"
-    )
-
-    return {"status": "OK", "id": office.id}
+    return {"status": "OK", "id": new_office.id}
 
 
 @api.post("/update_office", response_model=StatusResponse)
@@ -73,10 +69,6 @@ async def update_office(office: OfficeUpdate, db: Session = Depends(get_db)):
 
     logger.info(f"[UPDATE] Office with ID: {db_office.id} has been updated.")
 
-    await broker.publish(
-        {"action": "updated", "office_id": str(db_office.id)}, queue="office_events"
-    )
-
     return {"status": "OK", "id": db_office.id}
 
 
@@ -94,10 +86,6 @@ async def delete_office(office: OfficeDelete, db: Session = Depends(get_db)):
     db.commit()
 
     logger.info(f"[DELETE] Office with ID: {office.id} has been deleted.")
-
-    await broker.publish(
-        {"action": "deleted", "office_id": str(office.id)}, queue="office_events"
-    )
 
     return {"status": "OK", "id": office.id}
 

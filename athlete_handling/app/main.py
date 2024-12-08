@@ -49,10 +49,6 @@ async def create_athlete(athlete: AthleteCreate, db: Session = Depends(get_db)):
         f"[CREATE] Athlete created with ID: {new_athlete.id}, UIN: {new_athlete.UIN}"
     )
 
-    await broker.publish(
-        {"action": "created", "athlete_id": str(new_athlete.id)}, queue="athlete_events"
-    )
-
     return {"status": "OK", "id": new_athlete.id}
 
 
@@ -78,10 +74,6 @@ async def update_athlete(athlete: AthleteUpdate, db: Session = Depends(get_db)):
 
     logger.info(
         f"[UPDATE] Athlete with ID: {db_athlete.id} (UIN: {db_athlete.UIN}) has been updated."
-    )
-
-    await broker.publish(
-        {"action": "updated", "athlete_id": str(db_athlete.id)}, queue="athlete_events"
     )
 
     return {"status": "OK", "id": db_athlete.id}
