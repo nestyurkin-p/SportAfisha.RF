@@ -1,3 +1,5 @@
+from enum import Enum
+from uuid import UUID
 import uvicorn
 
 from typing import Any
@@ -22,12 +24,26 @@ class UserIn(BaseModel):
 
 
 class UserOut(BaseModel):
-    id: int
+    id: UUID
     email: str
     role: Role
 
     class Config:
         from_attributes = True
+
+
+class EmailVerificationStatus(str, Enum):
+    confirmed = "confirmed"
+    rejected = "rejected"
+
+
+class EmailVerificationRequest(BaseModel):
+    email: str
+    token: str
+
+
+class EmailVerificationResponse(BaseModel):
+    status: EmailVerificationStatus
 
 
 healthcheck_router = APIRouter()
@@ -54,6 +70,24 @@ def register_new_user(user: UserIn, db: Session = Depends(get_db)) -> Any:
         raise HTTPException(
             status.HTTP_406_NOT_ACCEPTABLE,
             detail="User with such email already exists",
+        )
+
+
+@user_router.post("/users/verify", tags=["User methods"])
+def verify_email(
+    request: EmailVerificationRequest, db: Session = Depends(get_db)
+) -> Any:
+    try:
+        return crud.verify_email(**request.model_dump(), db=db)
+    except crud.TokenNotExistsError:
+        raise HTTPException(
+            status.HTTP_202_ACCEPTED,
+            detail="Email already verified",
+        )
+    except crud.TokenMismatchError:
+        raise HTTPException(
+            status.HTTP_406_NOT_ACCEPTABLE,
+            detail="Wrong token",
         )
 
 

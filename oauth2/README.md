@@ -67,16 +67,15 @@ docker compose up --build
 ``` json
 {
     "email": "<email>",
-    "email_status": "<one of: pending_verification | verified>"
+    "status": "<one of: email_pending | email_verified | user_already_exists>"
 }
 ```
 
-Если `"require_email_verification" == true`, то `"email_status" = "pending_verification"`, при этом OAuth2 отправляет следующее сообщение в `email-request-queue`:
+Если `"require_email_verification" == true`, то `"status" = "email_pending"`, при этом OAuth2 отправляет следующее сообщение в `email-request-queue`:
 
 ``` json
 {
     "address": "<email address>",
-    "topic": "ФСП Портал - Подтвердите ваш адрес электронной почты",
     "content": "Ссылка для подтверждения: http://oauth2/verify?token=<verification token>"
 }
 

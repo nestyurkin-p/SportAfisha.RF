@@ -24,6 +24,21 @@ class MemCache:
     def erase_jwt(self, raw_jwt: str):
         self._r.delete(self._key_jwt(raw_jwt))
 
+    def _key_email_token(self, email):
+        return f"email:{email}"
+
+    def register_email_token(self, email: str, token: str):
+        self._r.set(self._key_email_token(email), token)
+
+    def check_email_token(self, email: str) -> bool:
+        return self._r.get(self._key_email_token(email)) is not None
+
+    def get_email_token(self, email: str) -> str:
+        return self._r.get(self._key_email_token(email))
+
+    def erase_email_token(self, email: str):
+        self._r.delete(self._key_email_token(email))
+
 
 def get_redis_connection_params():
     REDIS_HOST_FALLBACK = "localhost"
