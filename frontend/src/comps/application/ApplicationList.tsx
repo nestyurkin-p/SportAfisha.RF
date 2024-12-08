@@ -1,4 +1,5 @@
 import { Button } from "@mui/joy";
+import { useNavigate } from "react-router";
 
 function ApplicationListHeader() {
   return (
@@ -11,11 +12,13 @@ function ApplicationListHeader() {
 }
 
 function ApplicationRow({ application }: { application: any }) {
+  const nagivate = useNavigate();
   return (
     <>
       <button
         className="row btn border shadow-sm m-2 py-3 d-flex"
         style={{ fontSize: "10pt" }}
+        onClick={() => navigate(`/application/${application.id}`)}
       >
         <div className="col">{application.name}</div>
         <div className="col">{application.status}</div>
@@ -50,7 +53,28 @@ function ApplicationCreateButton() {
   );
 }
 
-export default function ApplicationList({ applications = [] }) {
+export default function ApplicationList() {
+  const applications = [
+    {
+      id: "app1",
+      name: "Заявка 1",
+      status: "Принято",
+      comment: "Продуктовая разработка",
+    },
+    {
+      id: "app2",
+      name: "Заявка 2",
+      status: "В работе",
+      comment: "-",
+    },
+    {
+      id: "app3",
+      name: "Заявка 3",
+      status: "Отклонено",
+      comment: "Недостаточно информации",
+    },
+  ];
+
   return (
     <>
       <div className="px-5">

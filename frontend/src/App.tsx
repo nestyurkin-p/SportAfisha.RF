@@ -7,16 +7,6 @@ import RegionList from "./comps/region/RegionList";
 import UserEdit from "./comps/profile/UserEdit";
 import OfficeEdit from "./comps/profile/OfficeEdit";
 
-const applications = [
-  {
-    name: "Заявка 1",
-    status: "Принято",
-    comment: "Продуктовая разработка",
-  },
-  { name: "Заявка 2", status: "В работе", comment: "-" },
-  { name: "Заявка 3", status: "Отклонено", comment: "Недостаточно информации" },
-];
-
 // Change mui JoyUI to use JetBrains Mono fonts
 const theme = extendTheme({
   fontFamily: {
