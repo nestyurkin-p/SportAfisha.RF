@@ -5,6 +5,7 @@ from app.data.db import get_db
 from pydantic import BaseModel
 from datetime import date
 from typing import Optional
+from app import oauth
 
 router = APIRouter()
 
@@ -24,7 +25,10 @@ class EventCreate(BaseModel):
 
 
 @router.post("/create_event", response_model=dict)
-def create_event(event_data: EventCreate, db: Session = Depends(get_db)):
+async def create_event(
+    event_data: EventCreate, token: str, db: Session = Depends(get_db)
+):
+    await oauth.validate(token, [oauth.Role.superuser])
     existing_event = db.query(Event).filter(Event.title == event_data.title).first()
     if existing_event:
         raise HTTPException(

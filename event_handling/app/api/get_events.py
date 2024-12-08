@@ -1,12 +1,10 @@
 from pydantic import BaseModel, UUID4
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import date
 
-from starlette import status
 from app.data.db import get_db
 from app.data.events import Event
-from app import oauth
 
 
 router = APIRouter()
@@ -42,6 +40,5 @@ def get_events(db: Session = Depends(get_db)):
 
 
 @router.get("/ping")
-async def ping(token: str):
-    await oauth.validate(token, [oauth.Role.superuser])
+async def ping():
     return "pong"
