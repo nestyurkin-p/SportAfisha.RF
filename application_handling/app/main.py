@@ -9,13 +9,13 @@ from faststream.rabbit import RabbitBroker, RabbitQueue
 from data.models import CreateApplicationRequest, ProcessApplicationRequest
 from data.database import get_db, create_applications_table
 from data.application import Application
+from broker import broker
 
 import oauth
 
 logging.basicConfig(level=logging.INFO)
 
 api = FastAPI()
-broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
 
 

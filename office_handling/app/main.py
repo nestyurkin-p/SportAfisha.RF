@@ -6,24 +6,21 @@ from typing import List
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
 from faststream import FastStream
-from faststream.rabbit import RabbitBroker, RabbitQueue
+from faststream.rabbit import RabbitQueue
 from sqlalchemy.orm import Session
 from uuid import UUID
 
 from database import Base, engine, get_db
 from models import Office
 from schemas import OfficeCreate, OfficeUpdate, OfficeInDB, StatusResponse, OfficeDelete
+from broker import broker
 
+import oauth
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 api = FastAPI()
-
-
-RABBIT_URL = os.getenv("RABBIT_URL", "amqp://root:toor@rabbitmq:5672/")
-broker = RabbitBroker(RABBIT_URL)
-
 
 app = FastStream(broker)
 
@@ -37,8 +34,10 @@ async def ping():
 
 
 @api.post("/create_office", response_model=StatusResponse)
-async def create_office(office: OfficeCreate, db: Session = Depends(get_db)):
-
+async def create_office(
+    office: OfficeCreate, token: str, db: Session = Depends(get_db)
+):
+    await oauth.validate(token, [oauth.Role.superuser])
     new_office = Office(**office.model_dump())
     db.add(new_office)
     db.commit()
@@ -48,7 +47,10 @@ async def create_office(office: OfficeCreate, db: Session = Depends(get_db)):
 
 
 @api.post("/update_office", response_model=StatusResponse)
-async def update_office(office: OfficeUpdate, db: Session = Depends(get_db)):
+async def update_office(
+    office: OfficeUpdate, token: str, db: Session = Depends(get_db)
+):
+    await oauth.validate(token, [oauth.Role.superuser, oauth.Role.office])
     logger.info(f"[UPDATE] Attempting to update office with ID: {office.id}")
 
     db_office = db.query(Office).filter(Office.id == office.id).first()
@@ -73,7 +75,10 @@ async def update_office(office: OfficeUpdate, db: Session = Depends(get_db)):
 
 
 @api.post("/delete_office", response_model=StatusResponse)
-async def delete_office(office: OfficeDelete, db: Session = Depends(get_db)):
+async def delete_office(
+    office: OfficeDelete, token: str, db: Session = Depends(get_db)
+):
+    await oauth.validate(token, [oauth.Role.superuser])
     logger.info(f"[DELETE] Attempting to delete office with ID: {office.id}")
 
     db_office = db.query(Office).filter(Office.id == office.id).first()
