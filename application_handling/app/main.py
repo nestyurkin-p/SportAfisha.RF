@@ -10,6 +10,8 @@ from data.models import CreateApplicationRequest, ProcessApplicationRequest
 from data.database import get_db, create_applications_table
 from data.application import Application
 
+import oauth
+
 logging.basicConfig(level=logging.INFO)
 
 api = FastAPI()
@@ -17,18 +19,21 @@ broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
 
 
-
 @api.get("/get_applications")
-async def get_application(db: Session = Depends(get_db)):
+async def get_application(token: str, db: Session = Depends(get_db)):
+    await oauth.validate(token, [])
     applications = db.query(Application).all()
-    return applications 
+    return applications
 
 
 @api.post("/upload_application")
 async def upload_application(
-    request: CreateApplicationRequest, db: Session = Depends(get_db)
+    request: CreateApplicationRequest, token: str, db: Session = Depends(get_db)
 ):
-    application = db.query(Application).filter(request.event_id == Application.event_id).first()
+    await oauth.validate(token, [oauth.Role.office])
+    application = (
+        db.query(Application).filter(request.event_id == Application.event_id).first()
+    )
     if application and application.rejected and application.purpose == request.purpose:
         application.results = request.results
         application.pending = True
@@ -37,17 +42,18 @@ async def upload_application(
 
         application_dict = application.to_dict()
         application_dict["resend"] = True
-        await broker.publish(application_dict, queue=f"{application.purpose}-events-queue")
+        await broker.publish(
+            application_dict, queue=f"{application.purpose}-events-queue"
+        )
 
         db.commit()
 
         data_to_return = {
             "status": "success",
             "application_id": application.id,
-            "resend": True
+            "resend": True,
         }
         return data_to_return
-
 
     new_application = Application(
         event_id=request.event_id,
@@ -73,8 +79,9 @@ async def upload_application(
 
 @api.post("/process_application")
 async def process_application(
-    request: ProcessApplicationRequest, db: Session = Depends(get_db)
+    request: ProcessApplicationRequest, token: str, db: Session = Depends(get_db)
 ):
+    await oauth.validate(token, [oauth.Role.office])
     try:
         application = (
             db.query(Application)

@@ -28,7 +28,7 @@ class EventCreate(BaseModel):
 async def create_event(
     event_data: EventCreate, token: str, db: Session = Depends(get_db)
 ):
-    await oauth.validate(token, [oauth.Role.superuser])
+    await oauth.validate(token, [oauth.Role.superuser, oauth.Role.office])
     existing_event = db.query(Event).filter(Event.title == event_data.title).first()
     if existing_event:
         raise HTTPException(
