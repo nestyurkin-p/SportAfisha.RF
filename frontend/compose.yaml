@@ -1,7 +1,9 @@
 services:
-  service:
-    container_name: service
+  frontend:
+    container_name: frontend
     stop_grace_period: 1s
+    ports:
+      - 3000:3000
     volumes:
       - .:/app
     build:

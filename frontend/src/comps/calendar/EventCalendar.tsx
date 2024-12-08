@@ -1,27 +1,55 @@
 import "./EventCalendar.css";
-import { atom, useAtomValue, useSetAtom } from "jotai";
+import { atom, useAtom, useAtomValue, useSetAtom } from "jotai";
 import Button from "@mui/joy/Button";
 import Select from "@mui/joy/Select";
 import Option from "@mui/joy/Option";
 import { ChevronLeft, ChevronRight } from "@mui/icons-material";
+import { useState } from "react";
+import { atomEffect } from "jotai-effect";
+import moment from "moment";
 
-const eventAtom = atom();
+const triggerRerenderAtom = atom();
+const currentEventAtom = atom();
+const currentMonthAtom = atom(moment());
+const currentOfficeAtom = atom("Межрегиональный");
+const officesAtom = atom(["Межрегиональный", "Москва"]);
+const eventsAtom = atom(
+  new Map([
+    ["03-11-2024", ["Событие 1", "Событие 2"]],
+    ["03-12-2024", ["Событие 1", "Событие 2"]],
+    ["09-12-2024", ["Событие 3"]],
+    ["23-12-2024", ["Событие 4", "Событие 5"]],
+    ["25-12-2024", ["Чемпионат и Первенство России"]],
+    ["01-01-2025", ["Test"]],
+  ]),
+);
 
 function OfficeFilter() {
+  const [currentOffice, setCurrentOffice] = useAtom(currentOfficeAtom);
+  const offices = useAtomValue(officesAtom);
   return (
     <>
       <Select
         variant="outlined"
-        defaultValue="interregional"
+        defaultValue={currentOffice}
         className="office-filter"
+        handleChange={(event: any, newValue: any) => {
+          setCurrentOffice(newValue);
+        }}
       >
-        <Option value="interregional">Межрегиональный</Option>
+        {offices.map((office, _) => (
+          <>
+            <Option value={office}>{office}</Option>
+          </>
+        ))}
       </Select>
     </>
   );
 }
 
 function CalendarHeader() {
+  const [currentMonth, setCurrentMonth] = useAtom(currentMonthAtom);
+  const [triggerRerender, setTriggerRerender] = useAtom(triggerRerenderAtom);
   return (
     <>
       <div className="header-content">
@@ -31,6 +59,10 @@ function CalendarHeader() {
             variant="outlined"
             color="neutral"
             className="navigation-button"
+            onClick={() => {
+              setCurrentMonth(currentMonth.subtract(1, "month"));
+              setTriggerRerender(!triggerRerender);
+            }}
           >
             <ChevronLeft />
           </Button>
@@ -38,10 +70,32 @@ function CalendarHeader() {
             variant="outlined"
             color="neutral"
             className="navigation-button"
+            onClick={() => {
+              setCurrentMonth(currentMonth.add(1, "month"));
+              setTriggerRerender(!triggerRerender);
+            }}
           >
             <ChevronRight />
           </Button>
-          <div className="navigation-label">Декабрь 2024</div>
+          <div className="navigation-label">
+            {
+              [
+                "Январь",
+                "Февраль",
+                "Март",
+                "Апрель",
+                "Май",
+                "Июнь",
+                "Июль",
+                "Август",
+                "Сентябрь",
+                "Октябрь",
+                "Ноябрь",
+                "Декабрь",
+              ][currentMonth.month()]
+            }{" "}
+            {currentMonth.year()}
+          </div>
         </div>
         <OfficeFilter />
       </div>
@@ -50,7 +104,7 @@ function CalendarHeader() {
 }
 
 function CalendarEventModal() {
-  const event = useAtomValue(eventAtom);
+  const event = useAtomValue(currentEventAtom);
   return (
     <div
       className="modal fade"
@@ -89,7 +143,7 @@ function CalendarEventModal() {
 }
 
 function CalendarGridCell({ day, idx }: { day: any; idx: number }) {
-  const setEvent = useSetAtom(eventAtom);
+  const setEvent = useSetAtom(currentEventAtom);
   return (
     <div key={idx} className="day-cell">
       <span className="date">{day.date}</span>
@@ -111,15 +165,23 @@ function CalendarGridCell({ day, idx }: { day: any; idx: number }) {
   );
 }
 
-function CalendarGrid({ events = [] }) {
-  const daysInMonth = 31;
-  const firstDay = 0; // Воскресенье (считается индексом первого дня)
+function CalendarGrid() {
+  useAtom(triggerRerenderAtom);
+
+  const events = useAtomValue(eventsAtom);
+  const currentMonth = useAtomValue(currentMonthAtom);
+  const daysInMonth = currentMonth.daysInMonth();
+  const firstWeekDay = currentMonth.weekday();
 
   const generateDays = () => {
     const days = [];
     for (let i = 1; i <= daysInMonth; i++) {
       const dayString = i.toString().padStart(2, "0");
-      const eventKey = `${dayString}-12-2024`;
+      const monthString = (currentMonth.month() + 1)
+        .toString()
+        .padStart(2, "0");
+      const yearString = currentMonth.year().toString().padStart(2, "0");
+      const eventKey = `${dayString}-${monthString}-${yearString}`;
       days.push({
         date: i,
         events: events.get(eventKey) || [],
@@ -133,19 +195,19 @@ function CalendarGrid({ events = [] }) {
   return (
     <div className="calendar-grid">
       {[
-        "Воскресенье",
         "Понедельник",
         "Вторник",
         "Среда",
         "Четверг",
         "Пятница",
         "Суббота",
+        "Воскресенье",
       ].map((day, idx) => (
         <div key={idx} className="day-header">
           {day}
         </div>
       ))}
-      {Array(firstDay)
+      {Array(firstWeekDay)
         .fill(null)
         .map((_, idx) => (
           <div key={idx} className="empty-cell" />
@@ -157,11 +219,11 @@ function CalendarGrid({ events = [] }) {
   );
 }
 
-export default function EventCalendar({ events = [] }) {
+export default function EventCalendar() {
   return (
     <>
       <CalendarHeader />
-      <CalendarGrid events={events} />
+      <CalendarGrid />
       <CalendarEventModal />
     </>
   );

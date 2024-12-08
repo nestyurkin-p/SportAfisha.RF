@@ -1,0 +1,26 @@
+services:
+  email:
+    container_name: email
+    stop_grace_period: 1s
+    restart: always
+    volumes:
+      - .:/app
+    build:
+      context: .
+    networks:
+      - sportportal_default
+
+  smptd:
+    container_name: smtpd
+    stop_grace_period: 1s
+    build:
+      context: ./aiosmtpd
+    ports:
+      - 8025:8025
+    networks:
+      - sportportal_default
+
+networks:
+  sportportal_default:
+    driver: bridge
+    external: true
