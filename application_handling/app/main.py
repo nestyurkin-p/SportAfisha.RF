@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from sqlalchemy.orm.attributes import Event
 import uvicorn
 from fastapi import FastAPI, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -16,13 +17,41 @@ broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 app = FastStream(broker)
 
 
-@api.post("/create_application")
-async def create_application(
-        request: CreateApplicationRequest, db: Session = Depends(get_db)
+
+@api.get("/get_applications")
+async def get_application(db: Session = Depends(get_db)):
+    applications = db.query(Application).all()
+    return applications 
+
+
+@api.post("/upload_application")
+async def upload_application(
+    request: CreateApplicationRequest, db: Session = Depends(get_db)
 ):
+    application = db.query(Application).filter(request.event_id == Application.event_id).first()
+    if application and application.rejected and application.purpose == request.purpose:
+        application.results = request.results
+        application.pending = True
+        application.confirmed = False
+        application.rejected = False
+
+        application_dict = application.to_dict()
+        application_dict["resend"] = True
+        await broker.publish(application_dict, queue=f"{application.purpose}-events-queue")
+
+        db.commit()
+
+        data_to_return = {
+            "status": "success",
+            "application_id": application.id,
+            "resend": True
+        }
+        return data_to_return
+
+
     new_application = Application(
         event_id=request.event_id,
-        application_purpose=request.application_purpose,  # open / close
+        purpose=request.purpose,  # open / close
         creator_id=request.creator_id,
         results=request.results,
     )
@@ -31,8 +60,11 @@ async def create_application(
         db.commit()
         db.refresh(new_application)
         application_dict = new_application.to_dict()
-        await broker.publish(application_dict, queue="pending-events-queue")
-        data_to_return = {"status": "success", "application_id": new_application.application_id}
+        await broker.publish(application_dict, queue=f"{request.purpose}-events-queue")
+        data_to_return = {
+            "status": "success",
+            "application_id": new_application.id,
+        }
         return data_to_return
     except Exception as e:
         db.rollback()
@@ -41,12 +73,12 @@ async def create_application(
 
 @api.post("/process_application")
 async def process_application(
-        request: ProcessApplicationRequest, db: Session = Depends(get_db)
+    request: ProcessApplicationRequest, db: Session = Depends(get_db)
 ):
     try:
         application = (
             db.query(Application)
-            .filter(Application.application_id == request.application_id)
+            .filter(Application.id == request.application_id)
             .first()
         )
 
@@ -57,17 +89,18 @@ async def process_application(
         application.confirmed = request.confirmed
         application.rejected = request.rejected
 
-        db.add(application)
+        # db.add(application)
         db.commit()
         db.refresh(application)
         application_dict = application.to_dict()
 
         # условия разделения на открытие и закрытие заявки в другом микросервисе
         # тк глобально их логика совпадает до отправки, отличаются только application.purpose
-        if application.rejected:  # Шаг 3: заявка отклонена
-            await broker.publish(application_dict, queue="rejected-events-queue")
-        elif application.confirmed:  # Шаг 3: заявка подтверждена
-            await broker.publish(application_dict, queue="confirmed-events-queue")
+        if "open" == application.purpose:  # Шаг 3: заявка отклонена
+            await broker.publish(application_dict, queue="open-events-queue")
+        if "close" == application.purpose:  # Шаг 3: заявка отклонена
+            await broker.publish(application_dict, queue="close-events-queue")
+
         return application_dict
     except Exception as e:
         db.rollback()
@@ -76,9 +109,8 @@ async def process_application(
 
 @app.after_startup
 async def startup():
-    await broker.declare_queue(RabbitQueue("pending-events-queue"))
-    await broker.declare_queue(RabbitQueue("rejected-events-queue"))
-    await broker.declare_queue(RabbitQueue("confirmed-events-queue"))
+    await broker.declare_queue(RabbitQueue("open-events-queue"))
+    await broker.declare_queue(RabbitQueue("close-events-queue"))
 
 
 async def start_faststream():

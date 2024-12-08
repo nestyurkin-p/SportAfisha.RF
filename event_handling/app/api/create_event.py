@@ -13,14 +13,13 @@ class EventCreate(BaseModel):
     title: str
     age_group: str
     females: bool
-    males: bool 
-    is_approved: bool 
-    discipline: str 
+    males: bool
+    discipline: str
     results: Optional[dict] = None
-    date_start: date 
-    date_finished: date 
+    date_start: date
+    date_finished: date
     location: str
-    description: str 
+    description: str
     is_local: bool
 
 
@@ -37,7 +36,6 @@ def create_event(event_data: EventCreate, db: Session = Depends(get_db)):
         age_group=event_data.age_group,
         females=event_data.females,
         males=event_data.males,
-        is_approved=event_data.is_approved,
         discipline=event_data.discipline,
         results=event_data.results,
         date_start=event_data.date_start,

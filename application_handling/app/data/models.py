@@ -7,7 +7,7 @@ class CreateApplicationRequest(BaseModel):
     token: str
     event_id: UUID
     creator_id: UUID
-    application_purpose: str
+    purpose: str
     results: Optional[Dict] = None
 
 

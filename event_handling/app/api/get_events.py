@@ -15,7 +15,6 @@ class EventResponse(BaseModel):
     age_group: str
     females: bool
     males: bool
-    is_approved: bool
     discipline: str
     results: dict | None
     date_start: date
@@ -23,6 +22,11 @@ class EventResponse(BaseModel):
     location: str
     description: str
     is_local: bool
+
+    pending: bool
+    rejected: bool
+    confirmed: bool
+    finished: bool
 
     class Config:
         orm_mode = True 

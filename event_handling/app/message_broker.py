@@ -11,39 +11,68 @@ from faststream.rabbit import RabbitBroker
 broker = RabbitBroker("amqp://root:toor@rabbitmq:5672/")
 
 
-class EventApprovedMsg(BaseModel):
+class ApplicationStatus(BaseModel):
+    pending: bool
+    rejected: bool
+    confirmed: bool
+
+
+class EventStatusChanger(BaseModel):
     event_id: str
     creator_id: str
     application_id: str
-    application_type: str 
-    approved: bool
+    purpose: str
+    application_status: ApplicationStatus
     results: dict | None
+    resend: Optional[bool] = None
 
 
-@broker.subscriber("finished-events-queue")
-async def finish_event(body):
-    print(type(body))
-
-
-@broker.subscriber("approved-events-queue")
-async def aprove_event(msg: EventApprovedMsg):
-    # {
-    #     "event_id": uuid,
-    #     "approved_status": bool,
-    #     "results": json | none
-    # }
+@broker.subscriber("close-events-queue")
+async def processing_close_event(msg: EventStatusChanger):
     with db.session() as db_sess:
         event = db_sess.query(Event).filter(Event.id == msg.event_id).first()
-        print(msg)
         if not event:
             logging.error(f"Can't find event with id={msg.event_id}")
             raise Exception
 
         if bool(event.is_local):
-            logging.error("This event dosen't need approve")
+            logging.error("This event dosen't need approve, because this event local")
             raise Exception
 
-        event.is_approved = msg.approved
+        if msg.application_status.confirmed:
+            event.finished = True
+        elif msg.resend:
+            event.confirmed = False
+            event.pending = True
+            event.rejected = False
+        elif msg.application_status.rejected:
+            event.confirmed = False
+            event.pending = False
+            event.rejected = True
+        db_sess.commit()
+
+@broker.subscriber("open-events-queue")
+async def processing_open_event(msg: EventStatusChanger):
+    with db.session() as db_sess:
+        event = db_sess.query(Event).filter(Event.id == msg.event_id).first()
+        if not event:
+            logging.error(f"Can't find event with id={msg.event_id}")
+            raise Exception
+
+        if bool(event.is_local):
+            logging.error("This event dosen't need approve, because this event local")
+            raise Exception
+
+        if msg.resend:
+            event.pending = True
+            event.rejected = False
+            event.confirmed = False
+            event.finished = False
+        else:
+            event.pending = msg.application_status.pending
+            event.rejected = msg.application_status.rejected
+            event.confirmed = msg.application_status.confirmed
+            event.finished = False
         db_sess.commit()
 
 
@@ -67,11 +96,10 @@ async def wait_events(body):
             date_finished=event.date_finished,
             location=str(event.location),
             description=str(event.description),
-            is_local=bool(event.is_local)
-        ) for event in events
+            is_local=bool(event.is_local),
+        )
+        for event in events
         for event in events
     ]
 
     await broker.publish(event_responses, "statistics-event-response-queue")
-
-
