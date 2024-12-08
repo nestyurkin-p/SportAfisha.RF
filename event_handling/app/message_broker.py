@@ -3,7 +3,6 @@ from datetime import date, datetime
 import logging
 from pydantic import UUID4, BaseModel, Json
 from typing import Optional
-from app.api.get_events import EventResponse
 from app.data.events import Event
 from app.data import db
 from faststream.rabbit import RabbitBroker
@@ -51,6 +50,7 @@ async def processing_close_event(msg: EventStatusChanger):
             event.rejected = True
         db_sess.commit()
 
+
 @broker.subscriber("open-events-queue")
 async def processing_open_event(msg: EventStatusChanger):
     with db.session() as db_sess:
@@ -78,6 +78,8 @@ async def processing_open_event(msg: EventStatusChanger):
 
 @broker.subscriber("statistics-event-request-queue")
 async def wait_events(body):
+    from app.api.get_events import EventResponse
+
     with db.session() as db_sess:
         events = db_sess.query(Event).all()
 

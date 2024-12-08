@@ -1,7 +1,7 @@
 import uuid
 import enum
 
-from sqlalchemy import UUID, Column, String, Enum, Bool
+from sqlalchemy import UUID, Column, String, Enum, Boolean
 from .database import SqlAlchemyBase
 
 
@@ -17,6 +17,6 @@ class User(SqlAlchemyBase):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     role = Column(Enum(Role))
     email = Column(String, unique=True)
-    email_verified = Column(Bool, default=False)
+    email_verified = Column(Boolean, default=False)
     password_hash = Column(String)
     owner_id = Column(UUID(as_uuid=True), nullable=True)

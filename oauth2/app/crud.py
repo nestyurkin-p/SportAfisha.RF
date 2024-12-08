@@ -101,7 +101,7 @@ def check_email_verification(user_id: uuid.UUID) -> bool:
     user = db.get(User, user_id)
     if user is None:
         raise UserNotExistsError
-    return user.verified
+    return user.email_verified
 
 
 def update_user(

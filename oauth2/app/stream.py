@@ -71,7 +71,7 @@ async def startup():
 @broker.subscriber(VALIDATE_REQQ)
 @broker.publisher(VALIDATE_RESPQ)
 async def validation_handler(message: ValidationRequest):
-    logging.info("Got {message}")
+    logging.info(f"Got {message}")
     try:
         raw_token = message.token
         token_data = get_token_data(raw_token)
@@ -82,7 +82,8 @@ async def validation_handler(message: ValidationRequest):
             role=token_data.user_role,
             validated=validated,
         )
-    except CredentialsValidationError:
+    except Exception as e:
+        logging.error(e)
         return ValidationResponse(
             token=raw_token,
             validated=False,
@@ -92,7 +93,7 @@ async def validation_handler(message: ValidationRequest):
 @broker.subscriber(REGISTER_REQQ)
 @broker.publisher(REGISTER_RESPQ)
 async def registration_handler(message: RegisterRequest):
-    logging.info("Got {message}")
+    logging.info(f"Got {message}")
 
     db = next(get_db())
     email = message.email
