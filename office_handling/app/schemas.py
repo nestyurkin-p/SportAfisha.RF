@@ -30,6 +30,14 @@ class OfficeUpdate(BaseModel):
 
 
 class OfficeInDB(OfficeBase):
+<<<<<<< HEAD
+=======
+    id: UUID4 = Field(
+        ...,
+        example="123e4567-e89b-42d3-a456-426614174000",
+        description="UUID версии 4 для уникальной идентификации спортсмена",
+    )
+>>>>>>> e9ee210 (modify /get_events handler)
     class Config:
         from_attributes = True
 

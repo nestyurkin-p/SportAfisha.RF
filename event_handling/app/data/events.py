@@ -25,4 +25,5 @@ class Event(SqlAlchemyBase):
     location = sa.Column(sa.String)
     description = sa.Column(sa.TEXT)
     is_local = sa.Column(sa.Boolean)
+    creator_id = sa.Column(sa.UUID, nullable=False)
 

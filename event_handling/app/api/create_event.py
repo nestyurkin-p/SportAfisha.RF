@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app.data.events import Event
 from app.data.db import get_db
-from pydantic import BaseModel
+from pydantic import UUID4, BaseModel
 from datetime import date
 from typing import Optional
 from app import oauth
@@ -22,6 +22,7 @@ class EventCreate(BaseModel):
     location: str
     description: str
     is_local: bool
+    creator_id: str
 
 
 @router.post("/create_event", response_model=dict)
@@ -47,6 +48,7 @@ async def create_event(
         location=event_data.location,
         description=event_data.description,
         is_local=event_data.is_local,
+        creator_id=event_data.creator_id
     )
 
     db.add(new_event)
