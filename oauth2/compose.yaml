@@ -7,7 +7,7 @@ services:
     volumes:
       - .pgdata:${PGDATA}
     ports:
-      - 5432:5432
+      - 5442:5432
     secrets:
       - source: postgres_root_password
     networks:
