@@ -2,13 +2,15 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, declarative_base
 import os
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://postgres:toor@athlete_db:5432/athlete_db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql://postgres:toor@athlete_db:5432/athlete_db"
+)
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 Base = declarative_base()
 
-# Зависимость для получения сессии базы данных
+
 def get_db():
     db = SessionLocal()
     try:

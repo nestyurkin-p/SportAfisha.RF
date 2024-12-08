@@ -16,8 +16,6 @@ class AthleteCreate(AthleteBase):
 class AthleteUpdate(BaseModel):
     id: UUID4 = Field(..., example="123e4567-e89b-42d3-a456-426614174000", description="UUID версии 4 для уникальной идентификации спортсмена")
     name: str = Field(None, example="Иван Иванов Иванович")
-    # last_name: str = Field(None, example="Иванов")
-    # patronymic: str = Field(None, example="Иванович")
     location: str = Field(None, example="Москва")
     email: EmailStr = Field(None, example="ivan.ivanov@example.com")
     UIN: str = Field(None, example="GTO001")
